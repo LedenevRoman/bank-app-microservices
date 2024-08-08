@@ -1,0 +1,13 @@
+server:
+  port: 8081
+bot:
+  name: ${BOT_NAME}
+  token: ${BOT_TOKEN}
+
+spring:
+  cloud:
+    openfeign:
+      httpclient:
+        connection-timeout: 5000
+bank-app-service:
+  url: http://localhost:8080
