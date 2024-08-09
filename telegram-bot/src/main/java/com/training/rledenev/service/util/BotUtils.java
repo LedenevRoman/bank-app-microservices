@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public final class BotUtils {
     private static final String INTEREST_RATE_AND_PERIOD = """
@@ -218,15 +219,11 @@ public final class BotUtils {
     }
 
     public static List<String> getCurrencyButtons() {
-        List<String> currencies = getCurrencyCodeNamesList();
+        List<String> currencies = Arrays.stream(CurrencyCode.values())
+                .map(Enum::toString)
+                .collect(Collectors.toList());
         currencies.add(BACK);
         return currencies;
-    }
-
-    public static List<String> getCurrencyCodeNamesList() {
-        return Arrays.stream(CurrencyCode.values())
-                .map(Enum::toString)
-                .toList();
     }
 
     public static List<String> getConfirmBlockButtons() {
@@ -239,7 +236,7 @@ public final class BotUtils {
 
     public static List<String> getTypeButtons() {
         TransactionType[] types = TransactionType.values();
-        return Arrays.stream(types).map(TransactionType::getName)
+        return Arrays.stream(types).map(TransactionType::getSimpleName)
                 .toList();
     }
 

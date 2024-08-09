@@ -38,7 +38,7 @@ class UserControllerTest {
         String userDtoJson = objectMapper.writeValueAsString(userDto);
 
         //when
-        String createdUserId = mockMvc.perform(MockMvcRequestBuilders.post("/users/register")
+        String createdUserJson = mockMvc.perform(MockMvcRequestBuilders.post("/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf())
                         .content(userDtoJson))
@@ -47,15 +47,9 @@ class UserControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        //then
-        String createdUserJson = mockMvc.perform(MockMvcRequestBuilders.get("/users/" + createdUserId))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
         UserDto createdUser = objectMapper.readValue(createdUserJson, UserDto.class);
 
+        //then
         userDto.setPassword(null);
         Assertions.assertEquals(userDto, createdUser);
     }

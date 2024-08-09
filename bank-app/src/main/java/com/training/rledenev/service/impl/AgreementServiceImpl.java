@@ -4,7 +4,6 @@ import com.training.rledenev.dto.AgreementDto;
 import com.training.rledenev.entity.Account;
 import com.training.rledenev.entity.Agreement;
 import com.training.rledenev.entity.Product;
-import com.training.rledenev.entity.enums.CurrencyCode;
 import com.training.rledenev.entity.enums.ProductType;
 import com.training.rledenev.entity.enums.Status;
 import com.training.rledenev.exception.AgreementNotFoundException;
@@ -129,7 +128,7 @@ public class AgreementServiceImpl implements AgreementService {
         }
         account.setNumber(number);
         account.setStatus(Status.NEW);
-        account.setCurrencyCode(CurrencyCode.valueOf(agreementDto.getCurrencyCode()));
+        account.setCurrencyCode(agreementDto.getCurrencyCode());
         account.setCreatedAt(LocalDateTime.now());
         account.setUpdatedAt(LocalDateTime.now());
         return account;

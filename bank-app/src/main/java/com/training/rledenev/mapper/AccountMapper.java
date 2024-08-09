@@ -11,17 +11,17 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface AccountMapper extends MapperDefault {
+public interface AccountMapper {
 
     @Named("toAccountDto")
     @Mapping(source = "agreement.product.name", target = "productName")
     @Mapping(source = "agreement.product.interestRate", target = "interestRate")
-    @Mapping(source = "client", target = "owner", qualifiedByName = "getUserFullName")
-    @Mapping(source = "agreement.manager", target = "manager", qualifiedByName = "getUserFullName",
+    @Mapping(source = "client", target = "ownerFullName", qualifiedByName = "getUserFullName")
+    @Mapping(source = "agreement.manager", target = "managerFullName", qualifiedByName = "getUserFullName",
             nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
     @Mapping(source = "agreement", target = "paymentTerm", qualifiedByName = "getPaymentTermFromAgreement")
     @Mapping(source = "currencyCode", target = "currencyName", qualifiedByName = "getCurrencyNameFromCode")
-    @Mapping(source = "agreement.product.type", target = "type")
+    @Mapping(source = "agreement.product.type", target = "productType")
     @Mapping(source = "agreement.startDate", target = "startDate")
     AccountDto mapToDto(Account account);
 

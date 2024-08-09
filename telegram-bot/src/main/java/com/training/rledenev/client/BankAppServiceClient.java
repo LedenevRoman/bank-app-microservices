@@ -2,6 +2,7 @@ package com.training.rledenev.client;
 
 import com.training.rledenev.config.FeignConfig;
 import com.training.rledenev.dto.*;
+import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.ProductType;
 import com.training.rledenev.enums.Role;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -51,7 +52,9 @@ public interface BankAppServiceClient {
     List<ProductDto> getActiveProductsWithType(@PathVariable(name = "type") ProductType productType);
 
     @GetMapping("/product/suitable")
-    ProductDto getSuitableProduct(@RequestBody AgreementDto agreementDto);
+    ProductDto getSuitableProduct(@RequestParam ProductType productType,
+                                  @RequestParam BigDecimal amount,
+                                  @RequestParam CurrencyCode currencyCode);
 
     @PostMapping("/agreement/create")
     AgreementDto createNewAgreement(@RequestBody AgreementDto agreementDto);

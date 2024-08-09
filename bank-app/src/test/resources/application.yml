@@ -3,12 +3,16 @@ spring:
     url: jdbc:h2:file:./testdb;AUTO_SERVER=TRUE
     driverClassName: org.h2.Driver
     username: sa
+    password:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: none
-  flyway:
+  liquibase:
     enabled: false
   sql:
     init:
       mode: never
+
+jwt:
+  secret: 456ba88f089978bc757f6cfebf7e790d1fe268ff876302e576ee23e82b31e89c

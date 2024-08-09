@@ -18,6 +18,6 @@ public class CurrencyController {
 
     @GetMapping("/{currencyCode}")
     public BigDecimal getCurrencyRate(@PathVariable(name = "currencyCode") CurrencyCode currencyCode) {
-        return currencyService.getRateOfCurrency(currencyCode.toString());
+        return currencyService.getRateOfCurrency(currencyCode);
     }
 }

@@ -1,7 +1,9 @@
 package com.training.rledenev.service;
 
+import com.training.rledenev.entity.enums.CurrencyCode;
+
 import java.math.BigDecimal;
 
 public interface CurrencyService {
-    BigDecimal getRateOfCurrency(String currencyCode);
+    BigDecimal getRateOfCurrency(CurrencyCode currencyCode);
 }

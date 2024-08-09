@@ -3,6 +3,8 @@ package com.training.rledenev.service.action.impl.transaction.impl;
 import com.training.rledenev.client.BankAppServiceClient;
 import com.training.rledenev.dto.AccountDto;
 import com.training.rledenev.dto.TransactionDto;
+import com.training.rledenev.enums.CurrencyCode;
+import com.training.rledenev.enums.TransactionType;
 import com.training.rledenev.service.action.impl.transaction.TransactionMessageHandlerService;
 import com.training.rledenev.service.chatmaps.ChatIdTransactionDtoMap;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +61,7 @@ public class TransactionMessageHandlerServiceImpl implements TransactionMessageH
             return createSendMessageWithButtons(chatId, SELECT_CURRENCY, getCurrencyButtons());
         }
         if (transactionDto.getCurrencyCode() == null) {
-            transactionDto.setCurrencyCode(message);
+            transactionDto.setCurrencyCode(CurrencyCode.valueOf(message.toUpperCase()));
             return createSendMessage(chatId, ENTER_AMOUNT);
         }
         if (transactionDto.getAmount() == null) {
@@ -74,7 +76,7 @@ public class TransactionMessageHandlerServiceImpl implements TransactionMessageH
             }
         }
         if (transactionDto.getType() == null && getTypeButtons().contains(message)) {
-            transactionDto.setType(message);
+            transactionDto.setType(TransactionType.valueOf(message.toUpperCase()));
             return createSendMessage(chatId, ENTER_DESCRIPTION);
         }
         if (transactionDto.getDescription() == null) {

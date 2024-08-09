@@ -9,10 +9,10 @@ public enum TransactionType {
     CASH("Cash"),
     DEPOSIT("Deposit");
 
-    private final String name;
+    private final String simpleName;
 
-    TransactionType(String name) {
-        this.name = name;
+    TransactionType(String simpleName) {
+        this.simpleName = simpleName;
     }
 
     @Override

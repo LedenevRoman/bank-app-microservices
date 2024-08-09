@@ -1,8 +1,8 @@
 package com.training.rledenev.service.impl;
 
-import com.training.rledenev.dto.AgreementDto;
 import com.training.rledenev.dto.ProductDto;
 import com.training.rledenev.entity.Product;
+import com.training.rledenev.entity.enums.CurrencyCode;
 import com.training.rledenev.entity.enums.ProductType;
 import com.training.rledenev.exception.ProductNotFoundException;
 import com.training.rledenev.mapper.ProductMapper;
@@ -38,18 +38,17 @@ public class ProductServiceImpl implements ProductService {
 
     @Transactional
     @Override
-    public ProductDto getSuitableProduct(AgreementDto agreementDto) {
+    public ProductDto getSuitableProduct(ProductType productType, BigDecimal amount, CurrencyCode currencyCode) {
         Product product;
-        if (agreementDto.getProductType().equals(ProductType.DEBIT_CARD.getName()) ||
-                agreementDto.getProductType().equals(ProductType.CREDIT_CARD.getName())) {
-            product = productRepository.getCardProduct(productMapper.stringToEnumName(agreementDto.getProductType()))
+        if (productType == ProductType.DEBIT_CARD ||
+                productType == ProductType.CREDIT_CARD) {
+            product = productRepository.getCardProduct(productType.toString())
                     .orElseThrow(() -> new ProductNotFoundException("No product type"));
         } else {
-            BigDecimal amount = BigDecimal.valueOf(agreementDto.getSum());
-            BigDecimal rate = currencyService.getRateOfCurrency(agreementDto.getCurrencyCode());
+            BigDecimal rate = currencyService.getRateOfCurrency(currencyCode);
             BigDecimal convertedAmount = amount.multiply(rate);
             product = productRepository.getProductByTypeSumAndPeriod(
-                    productMapper.stringToEnumName(agreementDto.getProductType()),
+                    productType.toString(),
                     convertedAmount.doubleValue()
             ).orElseThrow(() -> new ProductNotFoundException("Amount or period is out of limit"));
         }

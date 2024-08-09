@@ -38,7 +38,7 @@ class CurrencyControllerTest {
         JSONObject mockEurResponse = getMockJsonEurApiResponse(mockEurRate);
 
         //when
-        when(currencyApiRequestService.getCurrencyJsonObject(CurrencyCode.EUR.toString())).thenReturn(mockEurResponse);
+        when(currencyApiRequestService.getCurrencyJsonObject(CurrencyCode.EUR)).thenReturn(mockEurResponse);
         String eurRateResult = mockMvc.perform(MockMvcRequestBuilders.get("/currency/" + CurrencyCode.EUR))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -47,21 +47,22 @@ class CurrencyControllerTest {
 
         //then
         Assertions.assertEquals(mockEurRate, eurRateResult);
-        verify(currencyApiRequestService, times(1)).getCurrencyJsonObject(CurrencyCode.EUR.toString());
+        verify(currencyApiRequestService, times(1)).getCurrencyJsonObject(CurrencyCode.EUR);
     }
 
     private JSONObject getMockJsonEurApiResponse(String mockEurRate) throws JSONException {
-        return new JSONObject("{\n" +
-                "    \"table\": \"A\",\n" +
-                "    \"currency\": \"euro\",\n" +
-                "    \"code\": \"EUR\",\n" +
-                "    \"rates\": [\n" +
-                "        {\n" +
-                "            \"no\": \"209/A/NBP/2023\",\n" +
-                "            \"effectiveDate\": \"2023-10-27\",\n" +
-                "            \"mid\": " + mockEurRate + "\n" +
-                "        }\n" +
-                "    ]\n" +
-                "}");
+        return new JSONObject("""
+                {
+                    "table": "A",
+                    "currency": "euro",
+                    "code": "EUR",
+                    "rates": [
+                        {
+                            "no": "209/A/NBP/2023",
+                            "effectiveDate": "2023-10-27",
+                            "mid": %s
+                        }
+                    ]
+                }""".formatted(mockEurRate));
     }
 }

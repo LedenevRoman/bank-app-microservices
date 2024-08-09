@@ -9,10 +9,10 @@ public enum ProductType {
     DEBIT_CARD("Debit card"),
     CREDIT_CARD("Credit card");
 
-    private final String name;
+    private final String simpleName;
 
-    ProductType(String name) {
-        this.name = name;
+    ProductType(String simpleName) {
+        this.simpleName = simpleName;
     }
 
     @Override

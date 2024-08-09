@@ -2,9 +2,9 @@ package com.training.rledenev.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.training.rledenev.dto.AgreementDto;
 import com.training.rledenev.dto.ErrorData;
 import com.training.rledenev.dto.ProductDto;
+import com.training.rledenev.entity.enums.CurrencyCode;
 import com.training.rledenev.entity.enums.ProductType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -18,6 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -38,18 +40,17 @@ class ProductControllerTest {
     @WithUserDetails(value = "isabella.white@yopmail.com")
     void findSuitableProductPositiveCase() throws Exception {
         // given
-        AgreementDto agreementDto = new AgreementDto();
-        agreementDto.setProductType("LOAN");
-        agreementDto.setCurrencyCode("EUR");
-        agreementDto.setSum(50000.0);
-
-        String agreementStr = objectMapper.writeValueAsString(agreementDto);
+        String productType = ProductType.LOAN.toString();
+        String amount = "50000.0";
+        String currencyCode = CurrencyCode.EUR.toString();
 
         // when
         MvcResult productGetSuitableResult = mockMvc.perform(MockMvcRequestBuilders.get("/product/suitable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf())
-                        .content(agreementStr))
+                        .param("productType", productType)
+                        .param("amount", amount)
+                        .param("currencyCode", currencyCode))
                 .andReturn();
 
         // then
@@ -65,23 +66,21 @@ class ProductControllerTest {
     @WithUserDetails(value = "isabella.white@yopmail.com")
     void findSuitableProductGetOutOfLimitMessageNegativeCase() throws Exception {
         // given
-        AgreementDto agreementDto = new AgreementDto();
-        agreementDto.setProductType("LOAN");
-        agreementDto.setCurrencyCode("EUR");
-        agreementDto.setSum(00000.0);
-
-        String agreementStr = objectMapper.writeValueAsString(agreementDto);
+        String productType = ProductType.LOAN.toString();
+        String amount = "0";
+        String currencyCode = CurrencyCode.EUR.toString();
 
         // when
         MvcResult productGetSuitableResult = mockMvc.perform(MockMvcRequestBuilders.get("/product/suitable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf())
-                        .content(agreementStr))
+                        .param("productType", productType)
+                        .param("amount", amount)
+                        .param("currencyCode", currencyCode))
                 .andReturn();
 
         // then
-        Assertions.assertEquals(204, productGetSuitableResult.getResponse().getStatus());
-
+        Assertions.assertEquals(404, productGetSuitableResult.getResponse().getStatus());
 
         String productGetSuitableResultJson = productGetSuitableResult.getResponse().getContentAsString();
         ErrorData errorData = objectMapper.readValue(productGetSuitableResultJson, ErrorData.class);
@@ -93,18 +92,17 @@ class ProductControllerTest {
     @WithUserDetails(value = "isabella.white@yopmail.com")
     void findSuitableCardTypePositiveCase() throws Exception {
         // given
-        AgreementDto agreementDto = new AgreementDto();
-        agreementDto.setProductType("DEBIT_CARD");
-        agreementDto.setCurrencyCode("EUR");
-        agreementDto.setSum(00000.0);
-
-        String agreementStr = objectMapper.writeValueAsString(agreementDto);
+        String productType = ProductType.DEBIT_CARD.toString();
+        String amount = "0";
+        String currencyCode = CurrencyCode.EUR.toString();
 
         // when
         MvcResult productGetSuitableResult = mockMvc.perform(MockMvcRequestBuilders.get("/product/suitable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf())
-                        .content(agreementStr))
+                        .param("productType", productType)
+                        .param("amount", amount)
+                        .param("currencyCode", currencyCode))
                 .andReturn();
 
         // then
@@ -114,7 +112,7 @@ class ProductControllerTest {
         ProductDto receivedSuitableProduct = objectMapper.readValue(productGetSuitableResultJson, ProductDto.class);
 
         Assertions.assertEquals("Debit card", receivedSuitableProduct.getName());
-        Assertions.assertEquals(ProductType.DEBIT_CARD.getName(), receivedSuitableProduct.getType());
+        Assertions.assertSame(ProductType.DEBIT_CARD, receivedSuitableProduct.getType());
     }
 
     @Test
@@ -134,7 +132,8 @@ class ProductControllerTest {
 
         String productsGetAllActiveJson = productsGetAllActiveResult.getResponse().getContentAsString();
         List<ProductDto> receivedProductsAllActive = objectMapper.readValue(productsGetAllActiveJson,
-                new TypeReference<>() {});
+                new TypeReference<>() {
+                });
 
         Assertions.assertEquals(expected, receivedProductsAllActive);
 
@@ -143,58 +142,59 @@ class ProductControllerTest {
     private static List<ProductDto> getAllActiveProductDtos() {
         ProductDto productDto1 = new ProductDto();
         productDto1.setName("Auto Loan");
-        productDto1.setType("Loan");
+        productDto1.setType(ProductType.LOAN);
         productDto1.setMinLimit(60000);
-        productDto1.setInterestRate(4.5);
+        productDto1.setInterestRate(BigDecimal.valueOf(4.5)
+                .setScale(4, RoundingMode.UNNECESSARY));
         productDto1.setPeriodMonths(60);
 
         ProductDto productDto2 = new ProductDto();
         productDto2.setName("Mortgage Loan");
-        productDto2.setType("Loan");
+        productDto2.setType(ProductType.LOAN);
         productDto2.setMinLimit(250000);
-        productDto2.setInterestRate(3.2);
+        productDto2.setInterestRate(BigDecimal.valueOf(3.2).setScale(4, RoundingMode.UNNECESSARY));
         productDto2.setPeriodMonths(240);
 
         ProductDto productDto3 = new ProductDto();
         productDto3.setName("Travel Loan");
-        productDto3.setType("Loan");
+        productDto3.setType(ProductType.LOAN);
         productDto3.setMinLimit(8000);
-        productDto3.setInterestRate(8.2);
+        productDto3.setInterestRate(BigDecimal.valueOf(8.2).setScale(4, RoundingMode.UNNECESSARY));
         productDto3.setPeriodMonths(12);
 
         ProductDto productDto4 = new ProductDto();
         productDto4.setName("Pension Savings Deposit");
-        productDto4.setType("Deposit");
+        productDto4.setType(ProductType.DEPOSIT);
         productDto4.setMinLimit(30000);
-        productDto4.setInterestRate(3.8);
+        productDto4.setInterestRate(BigDecimal.valueOf(3.8).setScale(4, RoundingMode.UNNECESSARY));
         productDto4.setPeriodMonths(120);
 
         ProductDto productDto5 = new ProductDto();
         productDto5.setName("Children's Savings Deposit");
-        productDto5.setType("Deposit");
+        productDto5.setType(ProductType.DEPOSIT);
         productDto5.setMinLimit(5000);
-        productDto5.setInterestRate(4.5);
+        productDto5.setInterestRate(BigDecimal.valueOf(4.5).setScale(4, RoundingMode.UNNECESSARY));
         productDto5.setPeriodMonths(60);
 
         ProductDto productDto6 = new ProductDto();
         productDto6.setName("VIP Deposit");
-        productDto6.setType("Deposit");
+        productDto6.setType(ProductType.DEPOSIT);
         productDto6.setMinLimit(100000);
-        productDto6.setInterestRate(4.8);
+        productDto6.setInterestRate(BigDecimal.valueOf(4.8).setScale(4, RoundingMode.UNNECESSARY));
         productDto6.setPeriodMonths(24);
 
         ProductDto productDto7 = new ProductDto();
         productDto7.setName("Credit card");
-        productDto7.setType("Credit card");
+        productDto7.setType(ProductType.CREDIT_CARD);
         productDto7.setMinLimit(10000);
-        productDto7.setInterestRate(18.0);
+        productDto7.setInterestRate(BigDecimal.valueOf(18.0).setScale(4, RoundingMode.UNNECESSARY));
         productDto7.setPeriodMonths(60);
 
         ProductDto productDto8 = new ProductDto();
         productDto8.setName("Debit card");
-        productDto8.setType("Debit card");
+        productDto8.setType(ProductType.DEBIT_CARD);
         productDto8.setMinLimit(0);
-        productDto8.setInterestRate(0.0);
+        productDto8.setInterestRate(BigDecimal.ZERO.setScale(4, RoundingMode.UNNECESSARY));
         productDto8.setPeriodMonths(60);
 
         return List.of(productDto1, productDto2, productDto3, productDto4,
@@ -220,7 +220,8 @@ class ProductControllerTest {
 
         String productGetAllActiveByTypeResultJson = productsGetAllActiveByTypeResult.getResponse().getContentAsString();
         List<ProductDto> receivedProductsAllActiveByType = objectMapper.readValue(productGetAllActiveByTypeResultJson,
-                new TypeReference<>() {});
+                new TypeReference<>() {
+                });
 
         Assertions.assertEquals(expected, receivedProductsAllActiveByType);
     }
@@ -228,23 +229,23 @@ class ProductControllerTest {
     private static List<ProductDto> getProductDtos() {
         ProductDto productDto1 = new ProductDto();
         productDto1.setName("Auto Loan");
-        productDto1.setType(ProductType.LOAN.getName());
+        productDto1.setType(ProductType.LOAN);
         productDto1.setMinLimit(60000);
-        productDto1.setInterestRate(4.5);
+        productDto1.setInterestRate(BigDecimal.valueOf(4.5).setScale(4, RoundingMode.UNNECESSARY));
         productDto1.setPeriodMonths(60);
 
         ProductDto productDto2 = new ProductDto();
         productDto2.setName("Mortgage Loan");
-        productDto2.setType(ProductType.LOAN.getName());
+        productDto2.setType(ProductType.LOAN);
         productDto2.setMinLimit(250000);
-        productDto2.setInterestRate(3.2);
+        productDto2.setInterestRate(BigDecimal.valueOf(3.2).setScale(4, RoundingMode.UNNECESSARY));
         productDto2.setPeriodMonths(240);
 
         ProductDto productDto3 = new ProductDto();
         productDto3.setName("Travel Loan");
-        productDto3.setType(ProductType.LOAN.getName());
+        productDto3.setType(ProductType.LOAN);
         productDto3.setMinLimit(8000);
-        productDto3.setInterestRate(8.2);
+        productDto3.setInterestRate(BigDecimal.valueOf(8.2).setScale(4, RoundingMode.UNNECESSARY));
         productDto3.setPeriodMonths(12);
 
         return List.of(productDto1, productDto2, productDto3);

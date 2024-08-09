@@ -5,6 +5,7 @@ import com.training.rledenev.entity.enums.Role;
 import com.training.rledenev.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -14,6 +15,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
     public UserDto saveNewClient(@Valid @RequestBody UserDto userDto) {
         return userService.saveNewClient(userDto);
     }

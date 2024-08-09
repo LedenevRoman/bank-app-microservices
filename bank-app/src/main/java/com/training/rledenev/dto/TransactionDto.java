@@ -1,5 +1,7 @@
 package com.training.rledenev.dto;
 
+import com.training.rledenev.entity.enums.CurrencyCode;
+import com.training.rledenev.entity.enums.TransactionType;
 import lombok.Data;
 
 import jakarta.validation.constraints.Positive;
@@ -12,10 +14,10 @@ public class TransactionDto {
     private String creditAccountNumber;
     @Positive(message = "Amount must be greater than 0")
     private BigDecimal amount;
-    private String currencyCode;
-    private Double debitBalanceDifference;
-    private Double creditBalanceDifference;
-    private String type;
+    private CurrencyCode currencyCode;
+    private BigDecimal debitBalanceDifference;
+    private BigDecimal creditBalanceDifference;
+    private TransactionType type;
     private String description;
     private Date createdAt;
 }

@@ -7,9 +7,9 @@ import org.mapstruct.*;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface AgreementMapper extends MapperDefault {
+public interface AgreementMapper {
 
-    @Mapping(source = "sum", target = "sum", qualifiedByName = "doubleToBigDecimal",
+    @Mapping(source = "sum", target = "sum",
             nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
     Agreement mapToEntity(AgreementDto agreementDto);
 

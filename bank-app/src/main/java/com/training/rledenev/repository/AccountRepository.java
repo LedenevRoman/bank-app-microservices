@@ -20,6 +20,5 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     @Query("select a from Account a where a.client = :client and a.status = 'ACTIVE'")
     List<Account> getAccountsOfClient(@Param("client") User client);
 
-    @Query("select a from Account a where a.number = :number")
-    Optional<Account> getByNumber(@Param("number") String number);
+    Optional<Account> findByNumber(String number);
 }

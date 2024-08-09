@@ -5,22 +5,30 @@ import com.training.rledenev.entity.Account;
 import com.training.rledenev.entity.User;
 import com.training.rledenev.exception.AccountNotFoundException;
 import com.training.rledenev.mapper.AccountMapper;
-import com.training.rledenev.security.UserProvider;
 import com.training.rledenev.repository.AccountRepository;
+import com.training.rledenev.security.UserProvider;
 import com.training.rledenev.service.AccountService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@RequiredArgsConstructor
 @Service
 public class AccountServiceImpl implements AccountService {
     private static final String MAIN_BANK_ACCOUNT_NUMBER = "1111111111111111";
     private final AccountMapper accountMapper;
     private final AccountRepository accountRepository;
     private final UserProvider userProvider;
+    private final AccountService accountService;
+
+    public AccountServiceImpl(AccountMapper accountMapper, AccountRepository accountRepository,
+                              UserProvider userProvider, @Lazy AccountService accountService) {
+        this.accountMapper = accountMapper;
+        this.accountRepository = accountRepository;
+        this.userProvider = userProvider;
+        this.accountService = accountService;
+    }
 
     @Transactional
     @Override
@@ -38,13 +46,13 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Override
     public Account getAccountByNumber(String accountNumber) {
-        return accountRepository.getByNumber(accountNumber)
+        return accountRepository.findByNumber(accountNumber)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found with number " + accountNumber));
     }
 
     @Transactional
     @Override
     public Account getMainBankAccount() {
-        return getAccountByNumber(MAIN_BANK_ACCOUNT_NUMBER);
+        return accountService.getAccountByNumber(MAIN_BANK_ACCOUNT_NUMBER);
     }
 }

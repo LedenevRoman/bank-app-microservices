@@ -3,6 +3,7 @@ package com.training.rledenev.service.action.impl;
 import com.training.rledenev.client.BankAppServiceClient;
 import com.training.rledenev.dto.AccountDto;
 import com.training.rledenev.dto.TransactionDto;
+import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.Role;
 import com.training.rledenev.service.action.ActionMessageHandlerService;
 import com.training.rledenev.service.action.impl.transaction.TransactionMessageHandlerService;
@@ -100,8 +101,8 @@ public class AccountsMessageHandlerService implements ActionMessageHandlerServic
     }
 
     private void getDebitAccountMessage(StringBuilder stringBuilder, TransactionDto transactionDto,
-                                        String accountCurrency) {
-        if (transactionDto.getCurrencyCode().equals(accountCurrency)) {
+                                        CurrencyCode accountCurrency) {
+        if (transactionDto.getCurrencyCode() == accountCurrency) {
             stringBuilder.append(String.format(AMOUNT_IN_SAME_CURRENCY_DEBIT_TRANSACTION_INFO,
                     transactionDto.getAmount(), transactionDto.getCurrencyCode(),
                     transactionDto.getCreditAccountNumber()));
@@ -114,8 +115,8 @@ public class AccountsMessageHandlerService implements ActionMessageHandlerServic
     }
 
     private void getCreditAccountMessage(StringBuilder stringBuilder, TransactionDto transactionDto,
-                                         String accountCurrency) {
-        if (transactionDto.getCurrencyCode().equals(accountCurrency)) {
+                                         CurrencyCode accountCurrency) {
+        if (transactionDto.getCurrencyCode() == accountCurrency) {
             stringBuilder.append(String.format(AMOUNT_IN_SAME_CURRENCY_CREDIT_TRANSACTION_INFO,
                     transactionDto.getAmount(), transactionDto.getCurrencyCode(),
                     transactionDto.getDebitAccountNumber()));
@@ -135,7 +136,7 @@ public class AccountsMessageHandlerService implements ActionMessageHandlerServic
     private String getCustomAccountInfo(AccountDto accountDto) {
         LocalDate startDate = accountDto.getStartDate();
         LocalDate paymentTerm = accountDto.getPaymentTerm();
-        return String.format(FULL_ACCOUNT_INFO, accountDto.getNumber(), accountDto.getOwner(),
+        return String.format(FULL_ACCOUNT_INFO, accountDto.getNumber(), accountDto.getOwnerFullName(),
                 accountDto.getProductName(), accountDto.getInterestRate(), startDate, startDate, startDate, paymentTerm,
                 paymentTerm, paymentTerm, accountDto.getBalance(), accountDto.getCurrencyName());
     }

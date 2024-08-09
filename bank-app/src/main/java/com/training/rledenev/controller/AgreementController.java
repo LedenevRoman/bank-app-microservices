@@ -3,11 +3,10 @@ package com.training.rledenev.controller;
 import com.training.rledenev.dto.AgreementDto;
 import com.training.rledenev.service.AgreementService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -17,30 +16,27 @@ public class AgreementController {
     private final AgreementService agreementService;
 
     @PostMapping("/create")
-    public ResponseEntity<Long> createNewAgreement(@RequestBody AgreementDto agreementDto) {
-        agreementDto = agreementService.createNewAgreement(agreementDto);
-        return ResponseEntity.created(URI.create("/" + agreementDto.getId())).body(agreementDto.getId());
+    @ResponseStatus(HttpStatus.CREATED)
+    public AgreementDto createNewAgreement(@RequestBody AgreementDto agreementDto) {
+        return agreementService.createNewAgreement(agreementDto);
     }
 
     @GetMapping("/all/new")
     @PreAuthorize("hasAuthority('MANAGER')")
-    public ResponseEntity<List<AgreementDto>> getNewAgreements() {
-        List<AgreementDto> agreementDtos = agreementService.getAgreementsForManager();
-        return ResponseEntity.ok().body(agreementDtos);
+    public List<AgreementDto> getNewAgreements() {
+        return agreementService.getAgreementsForManager();
     }
 
     @PutMapping("/confirm/{id}")
     @PreAuthorize("hasAuthority('MANAGER')")
-    public ResponseEntity<Void> confirmAgreement(@PathVariable(name = "id") Long id) {
+    public void confirmAgreement(@PathVariable(name = "id") Long id) {
         agreementService.confirmAgreementByManager(id);
-        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/block/{id}")
     @PreAuthorize("hasAuthority('MANAGER')")
-    public ResponseEntity<Void> blockAgreement(@PathVariable(name = "id") Long id) {
+    public void blockAgreement(@PathVariable(name = "id") Long id) {
         agreementService.blockAgreementByManager(id);
-        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}")

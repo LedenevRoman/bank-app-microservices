@@ -15,16 +15,17 @@ import java.math.BigDecimal;
 @Service
 public class CurrencyServiceNBP implements CurrencyService {
     private final CurrencyApiRequestService currencyApiRequestService;
+
     @Override
-    public BigDecimal getRateOfCurrency(String currencyCode) {
-        currencyCode = currencyCode.toUpperCase();
-        if (CurrencyCode.PLN.toString().equals(currencyCode)) {
+    public BigDecimal getRateOfCurrency(CurrencyCode currencyCode) {
+        if (CurrencyCode.PLN == currencyCode) {
             return BigDecimal.valueOf(1);
         }
         JSONObject currencyJson;
         try {
             currencyJson = currencyApiRequestService.getCurrencyJsonObject(currencyCode);
-        } catch (IOException e) {
+        } catch (InterruptedException | IOException e) {
+            Thread.currentThread().interrupt();
             throw new RequestApiException(e.getMessage());
         }
         JSONObject subObject = currencyJson.getJSONArray("rates").getJSONObject(0);

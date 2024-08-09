@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.training.rledenev.dto.AccountDto;
 import com.training.rledenev.dto.ErrorData;
 import com.training.rledenev.dto.TransactionDto;
+import com.training.rledenev.entity.enums.CurrencyCode;
+import com.training.rledenev.entity.enums.TransactionType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -48,7 +51,7 @@ class TransactionControllerTest {
         //when
         String allTransactionsOfAccountJson = mockMvc.perform(MockMvcRequestBuilders.get("/transaction/all")
                         .with(csrf())
-                        .content(accountNumber))
+                        .param("accountNumber", accountNumber))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -77,7 +80,8 @@ class TransactionControllerTest {
                 .getContentAsString();
 
         List<AccountDto> accountDtosOfUserBeforeTransaction = objectMapper
-                .readValue(getAccountsOfUserBeforeTransactionResult, new TypeReference<>() {});
+                .readValue(getAccountsOfUserBeforeTransactionResult, new TypeReference<>() {
+                });
 
         AccountDto debitAccountDtoBeforeTransaction = accountDtosOfUserBeforeTransaction.get(0);
         AccountDto creditAccountDtoBeforeTransaction = accountDtosOfUserBeforeTransaction.get(1);
@@ -98,7 +102,8 @@ class TransactionControllerTest {
                 .getContentAsString();
 
         List<AccountDto> accountDtosOfUserAfterTransaction = objectMapper.readValue(getAccountsOfUserAfterTransactionResult,
-                new TypeReference<>() {});
+                new TypeReference<>() {
+                });
         AccountDto debitAccountDtoAfterTransaction = accountDtosOfUserAfterTransaction.get(0);
         AccountDto creditAccountDtoAfterTransaction = accountDtosOfUserAfterTransaction.get(1);
 
@@ -106,9 +111,9 @@ class TransactionControllerTest {
                 debitAccountDtoAfterTransaction.getBalance());
         Assertions.assertNotEquals(creditAccountDtoBeforeTransaction.getBalance(),
                 creditAccountDtoAfterTransaction.getBalance());
-        Assertions.assertEquals(debitAccountDtoBeforeTransaction.getBalance() - transactionDto.getAmount().doubleValue(),
+        Assertions.assertEquals(debitAccountDtoBeforeTransaction.getBalance().subtract(transactionDto.getAmount()),
                 debitAccountDtoAfterTransaction.getBalance());
-        Assertions.assertEquals(creditAccountDtoBeforeTransaction.getBalance() + transactionDto.getAmount().doubleValue(),
+        Assertions.assertEquals(creditAccountDtoBeforeTransaction.getBalance().add(transactionDto.getAmount()),
                 creditAccountDtoAfterTransaction.getBalance());
     }
 
@@ -126,22 +131,6 @@ class TransactionControllerTest {
                         .with(csrf())
                         .content(transactionDtoJson))
                 .andExpect(status().is(406));
-    }
-
-    @Test
-    @WithUserDetails(value = "isabella.white@yopmail.com")
-    void shouldNotCreateTransactionWrongType() throws Exception {
-        //given
-        TransactionDto transactionDto = getTransactionDto();
-        transactionDto.setType("error");
-        String transactionDtoJson = objectMapper.writeValueAsString(transactionDto);
-
-        //when
-        mockMvc.perform(MockMvcRequestBuilders.post("/transaction/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .with(csrf())
-                        .content(transactionDtoJson))
-                .andExpect(status().is(500));
     }
 
     @Test
@@ -172,9 +161,9 @@ class TransactionControllerTest {
         TransactionDto transactionDto = new TransactionDto();
         transactionDto.setDebitAccountNumber("1234567890123456");
         transactionDto.setCreditAccountNumber("6123456789012345");
-        transactionDto.setCurrencyCode("USD");
+        transactionDto.setCurrencyCode(CurrencyCode.USD);
         transactionDto.setAmount(BigDecimal.valueOf(1000.0));
-        transactionDto.setType("CASH");
+        transactionDto.setType(TransactionType.CASH);
         transactionDto.setDescription("test");
         return transactionDto;
     }
@@ -183,22 +172,28 @@ class TransactionControllerTest {
         TransactionDto transactionDto1 = new TransactionDto();
         transactionDto1.setDebitAccountNumber("1234567890123456");
         transactionDto1.setCreditAccountNumber("6123456789012345");
-        transactionDto1.setAmount(BigDecimal.valueOf(1037.58));
-        transactionDto1.setCurrencyCode("USD");
-        transactionDto1.setDebitBalanceDifference(1037.0);
-        transactionDto1.setCreditBalanceDifference(1037.0);
-        transactionDto1.setType("CASH");
+        transactionDto1.setAmount(BigDecimal.valueOf(1037.58)
+                .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto1.setCurrencyCode(CurrencyCode.USD);
+        transactionDto1.setDebitBalanceDifference(BigDecimal.valueOf(1037)
+                .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto1.setCreditBalanceDifference(BigDecimal.valueOf(1037)
+                .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto1.setType(TransactionType.CASH);
         transactionDto1.setDescription("for ice cream");
         transactionDto1.setCreatedAt(getDateFromString());
 
         TransactionDto transactionDto2 = new TransactionDto();
         transactionDto2.setDebitAccountNumber("6123456789012345");
         transactionDto2.setCreditAccountNumber("4561234567890123");
-        transactionDto2.setAmount(BigDecimal.valueOf(845.67));
-        transactionDto2.setCurrencyCode("USD");
-        transactionDto2.setDebitBalanceDifference(845.0);
-        transactionDto2.setCreditBalanceDifference(845.0);
-        transactionDto2.setType("CASH");
+        transactionDto2.setAmount(BigDecimal.valueOf(845.67)
+                .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto2.setCurrencyCode(CurrencyCode.USD);
+        transactionDto2.setDebitBalanceDifference(BigDecimal.valueOf(845)
+                .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto2.setCreditBalanceDifference(BigDecimal.valueOf(845)
+                .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto2.setType(TransactionType.CASH);
         transactionDto2.setDescription("for ice cream");
         transactionDto2.setCreatedAt(getDateFromString());
 

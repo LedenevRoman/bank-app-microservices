@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface TransactionMapper extends MapperDefault {
+public interface TransactionMapper {
 
     @Named("toTransactionDto")
     @Mapping(source = "debitAccount.number", target = "debitAccountNumber")
@@ -21,9 +21,6 @@ public interface TransactionMapper extends MapperDefault {
     @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "mapToDate")
     TransactionDto mapToDto(Transaction transaction);
 
-    @Mapping(source = "type", target = "type", qualifiedByName = "stringToEnumName")
-    @Mapping(source = "amount", target = "amount")
-    @Mapping(source = "currencyCode", target = "currencyCode", qualifiedByName = "stringToEnumName")
     Transaction mapToEntity(TransactionDto transactionDto);
 
     @IterableMapping(qualifiedByName = "toTransactionDto")

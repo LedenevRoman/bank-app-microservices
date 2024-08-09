@@ -4,12 +4,12 @@ import com.training.rledenev.dto.ErrorData;
 import com.training.rledenev.exception.*;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
@@ -19,47 +19,48 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ExceptionControllerAdvisor {
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorData> handleException(Exception exception) {
-        ErrorData errorData = new ErrorData(HttpStatus.INTERNAL_SERVER_ERROR, LocalDateTime.now(),
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorData handleException(Exception exception) {
+        return new ErrorData(HttpStatus.INTERNAL_SERVER_ERROR, LocalDateTime.now(),
                 exception.getMessage(), Arrays.toString(exception.getStackTrace()));
-        return new ResponseEntity<>(errorData, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorData> handleEntityNotFoundException(EntityNotFoundException exception) {
-        ErrorData errorData = new ErrorData(HttpStatus.NO_CONTENT, LocalDateTime.now(),
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorData handleEntityNotFoundException(EntityNotFoundException exception) {
+        return new ErrorData(HttpStatus.NOT_FOUND, LocalDateTime.now(),
                 exception.getMessage(), Arrays.toString(exception.getStackTrace()));
-        return new ResponseEntity<>(errorData, HttpStatus.NO_CONTENT);
     }
 
     @ExceptionHandler(InsufficientFundsException.class)
-    public ResponseEntity<ErrorData> handleInsufficientFundsException(InsufficientFundsException exception) {
-        ErrorData errorData = new ErrorData(HttpStatus.NOT_ACCEPTABLE, LocalDateTime.now(),
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public ErrorData handleInsufficientFundsException(InsufficientFundsException exception) {
+        return new ErrorData(HttpStatus.NOT_ACCEPTABLE, LocalDateTime.now(),
                 exception.getMessage(), Arrays.toString(exception.getStackTrace()));
-        return new ResponseEntity<>(errorData, HttpStatus.NOT_ACCEPTABLE);
     }
 
     @ExceptionHandler({NotOwnerException.class, AuthenticationException.class})
-    public ResponseEntity<ErrorData> handleForbiddenException(AccessDeniedException exception) {
-        ErrorData errorData = new ErrorData(HttpStatus.FORBIDDEN, LocalDateTime.now(),
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorData handleForbiddenException(AccessDeniedException exception) {
+        return new ErrorData(HttpStatus.FORBIDDEN, LocalDateTime.now(),
                 exception.getMessage(), Arrays.toString(exception.getStackTrace()));
-        return new ResponseEntity<>(errorData, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorData> handleUserAlreadyExistsException(UserAlreadyExistsException exception) {
-        ErrorData errorData = new ErrorData(HttpStatus.BAD_REQUEST, LocalDateTime.now(),
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorData handleUserAlreadyExistsException(UserAlreadyExistsException exception) {
+        return new ErrorData(HttpStatus.BAD_REQUEST, LocalDateTime.now(),
                 exception.getMessage(), Arrays.toString(exception.getStackTrace()));
-        return new ResponseEntity<>(errorData, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorData> handleArgumentNotValid(MethodArgumentNotValidException exception) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorData handleArgumentNotValid(MethodArgumentNotValidException exception) {
         String message = getMessage(exception);
-        ErrorData errorModel = new ErrorData(HttpStatus.BAD_REQUEST, LocalDateTime.now(),
+        return new ErrorData(HttpStatus.BAD_REQUEST, LocalDateTime.now(),
                 message, exception.toString());
-        return new ResponseEntity<>(errorModel, HttpStatus.BAD_REQUEST);
     }
 
     private String getMessage(MethodArgumentNotValidException exception) {

@@ -11,6 +11,6 @@ public class UserProvider {
         return ((CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getPrincipal())
-                .getUser();
+                .user();
     }
 }

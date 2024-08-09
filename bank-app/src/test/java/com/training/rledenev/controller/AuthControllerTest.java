@@ -38,7 +38,7 @@ class AuthControllerTest {
     @WithUserDetails(value = "isabella.white@yopmail.com")
     void shouldGetAuthRole() throws Exception {
         // when
-        MvcResult getAuthRoleResult = mockMvc.perform(MockMvcRequestBuilders.get("/auth"))
+        MvcResult getAuthRoleResult = mockMvc.perform(MockMvcRequestBuilders.get("/users/role"))
                 .andExpect(status().isOk())
                 .andReturn();
 

@@ -109,8 +109,8 @@ public class TransactionServiceImpl implements TransactionService {
 
     private BigDecimal calculateBalanceDifference(BigDecimal amount, CurrencyCode transactionCurrency,
                                                   CurrencyCode accountCurrency) {
-        BigDecimal rateTransactionCurrency = currencyService.getRateOfCurrency(transactionCurrency.toString());
-        BigDecimal rateAccountCurrency = currencyService.getRateOfCurrency(accountCurrency.toString());
+        BigDecimal rateTransactionCurrency = currencyService.getRateOfCurrency(transactionCurrency);
+        BigDecimal rateAccountCurrency = currencyService.getRateOfCurrency(accountCurrency);
         BigDecimal rateOfConversion = rateTransactionCurrency.divide(rateAccountCurrency, 4, RoundingMode.HALF_UP);
         return amount.multiply(rateOfConversion);
     }

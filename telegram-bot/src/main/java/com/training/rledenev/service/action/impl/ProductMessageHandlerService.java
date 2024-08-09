@@ -3,6 +3,7 @@ package com.training.rledenev.service.action.impl;
 import com.training.rledenev.client.BankAppServiceClient;
 import com.training.rledenev.dto.AgreementDto;
 import com.training.rledenev.dto.ProductDto;
+import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.ProductType;
 import com.training.rledenev.enums.Role;
 import com.training.rledenev.service.action.ActionMessageHandlerService;
@@ -16,6 +17,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.training.rledenev.service.util.BotUtils.*;
 
@@ -36,20 +38,23 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
     private SendMessage handleInitialProductActionMessage(long chatId, String message) {
         List<ProductDto> productDtos = bankAppServiceClient.getAllActiveProductDtos();
         List<String> productTypes = productDtos.stream()
-                .map(ProductDto::getType)
+                .map(productDto -> productDto.getType().getSimpleName())
                 .distinct()
-                .toList();
+                .collect(Collectors.toList());
         if (message.equals(PRODUCTS)) {
             return createSendMessageWithButtons(chatId, getResponse(productTypes), productTypes);
         }
         if (productTypes.contains(message)) {
             AgreementDto agreementDto = new AgreementDto();
-            agreementDto.setProductType(message);
+            agreementDto.setProductType(ProductType.valueOf(message.toUpperCase().replaceAll("\\s", "_")));
             ChatIdAgreementDtoMap.put(chatId, agreementDto);
-            return createSendMessageWithButtons(chatId,
-                    getAllProductsWithTypeListMessage(message, bankAppServiceClient.getActiveProductsWithType(ProductType
-                            .valueOf(message.toUpperCase().replaceAll("\\s", "_")))),
-                    getCurrencyButtons());
+            return createSendMessageWithButtons(
+                    chatId,
+                    getAllProductsWithTypeListMessage(message,
+                            bankAppServiceClient.getActiveProductsWithType(agreementDto.getProductType())
+                    ),
+                    getCurrencyButtons()
+            );
         }
         return createSendMessageWithButtons(chatId, UNKNOWN_INPUT_MESSAGE, List.of(EXIT));
     }
@@ -65,7 +70,7 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
     private SendMessage handleAgreementCreationMessage(long chatId, String message, Role role) {
         AgreementDto agreementDto = ChatIdAgreementDtoMap.get(chatId);
         if (agreementDto.getCurrencyCode() == null) {
-            agreementDto.setCurrencyCode(message);
+            agreementDto.setCurrencyCode(CurrencyCode.valueOf(message.toUpperCase()));
             if (isProductCard(agreementDto)) {
                 return completeAgreementDtoForCardProductMessage(chatId, agreementDto);
             } else {
@@ -74,7 +79,7 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
         }
         if (agreementDto.getSum() == null) {
             try {
-                agreementDto.setSum(Double.parseDouble(message));
+                agreementDto.setSum(BigDecimal.valueOf(Double.parseDouble(message)));
                 return completeAgreementDtoMessage(chatId, role, agreementDto);
             } catch (NumberFormatException e) {
                 return createSendMessage(chatId, INCORRECT_NUMBER);
@@ -85,21 +90,22 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
     }
 
     private static boolean isProductCard(AgreementDto agreementDto) {
-        return agreementDto.getProductType().equals(ProductType.DEBIT_CARD.getName())
-                || agreementDto.getProductType().equals(ProductType.CREDIT_CARD.getName());
+        return agreementDto.getProductType() == ProductType.DEBIT_CARD
+                || agreementDto.getProductType() == ProductType.CREDIT_CARD;
     }
 
     private SendMessage completeAgreementDtoForCardProductMessage(long chatId, AgreementDto agreementDto) {
-        ProductDto productDto = bankAppServiceClient.getSuitableProduct(agreementDto);
+        ProductDto productDto = bankAppServiceClient.getSuitableProduct(agreementDto.getProductType(),
+                agreementDto.getSum(), agreementDto.getCurrencyCode());
         if (productDto == null) {
             return createSendMessageWithButtons(chatId, "No suitable product",
                     List.of(BACK));
         }
         BigDecimal amount = BigDecimal.valueOf(productDto.getMinLimit())
-                .divide(bankAppServiceClient.getRateOfCurrency(agreementDto.getCurrencyCode()), 2,
+                .divide(bankAppServiceClient.getRateOfCurrency(agreementDto.getCurrencyCode().toString()), 2,
                         RoundingMode.HALF_UP);
         agreementDto.setPeriodMonths(productDto.getPeriodMonths());
-        agreementDto.setSum(amount.doubleValue());
+        agreementDto.setSum(amount);
         agreementDto.setProductName(productDto.getName());
         agreementDto.setInterestRate(productDto.getInterestRate());
         return createSendMessageWithButtons(chatId,
@@ -110,7 +116,8 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
 
     private SendMessage completeAgreementDtoMessage(long chatId, Role role, AgreementDto agreementDto) {
         try {
-            ProductDto productDto = bankAppServiceClient.getSuitableProduct(agreementDto);
+            ProductDto productDto = bankAppServiceClient.getSuitableProduct(agreementDto.getProductType(),
+                    agreementDto.getSum(), agreementDto.getCurrencyCode());
             agreementDto.setPeriodMonths(productDto.getPeriodMonths());
             agreementDto.setProductName(productDto.getName());
             return createSendMessageWithButtons(chatId,
@@ -134,7 +141,7 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
     }
 
     private String getNewAgreementMessage(AgreementDto agreementDto) {
-        return String.format(AGREEMENT_DONE, agreementDto.getProductName(), Math.round(agreementDto.getSum()),
+        return String.format(AGREEMENT_DONE, agreementDto.getProductName(), Math.round(agreementDto.getSum().doubleValue()),
                 agreementDto.getCurrencyCode(), agreementDto.getInterestRate(),
                 getStringFormattedPeriod(agreementDto.getPeriodMonths()));
     }
