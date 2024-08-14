@@ -28,7 +28,7 @@ public class ProductController {
 
     @GetMapping("/suitable")
     public ProductDto getSuitableProduct(@RequestParam ProductType productType,
-                                         @RequestParam BigDecimal amount,
+                                         @RequestParam(defaultValue = "0") BigDecimal amount,
                                          @RequestParam CurrencyCode currencyCode) {
         return productService.getSuitableProduct(productType, amount, currencyCode);
     }

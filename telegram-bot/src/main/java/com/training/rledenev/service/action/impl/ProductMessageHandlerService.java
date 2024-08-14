@@ -3,12 +3,12 @@ package com.training.rledenev.service.action.impl;
 import com.training.rledenev.client.BankAppServiceClient;
 import com.training.rledenev.dto.AgreementDto;
 import com.training.rledenev.dto.ProductDto;
+import com.training.rledenev.entity.Chat;
 import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.ProductType;
 import com.training.rledenev.enums.Role;
+import com.training.rledenev.repository.ChatRepository;
 import com.training.rledenev.service.action.ActionMessageHandlerService;
-import com.training.rledenev.service.chatmaps.ChatIdActionNameMap;
-import com.training.rledenev.service.chatmaps.ChatIdAgreementDtoMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,23 +19,25 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.training.rledenev.service.util.BotUtils.*;
+import static com.training.rledenev.util.BotUtils.*;
 
 @RequiredArgsConstructor
 @Service
 public class ProductMessageHandlerService implements ActionMessageHandlerService {
     private final BankAppServiceClient bankAppServiceClient;
+    private final ChatRepository chatRepository;
 
     @Override
-    public SendMessage handleMessage(long chatId, String message, Role role) {
-        if (ChatIdAgreementDtoMap.get(chatId) == null) {
-            return handleInitialProductActionMessage(chatId, message);
+    public SendMessage handleMessage(Chat chat, String message, Role role) {
+        if (chat.getAgreementDto() == null) {
+            return handleInitialProductActionMessage(chat, message);
         } else {
-            return handleAgreementCreationMessage(chatId, message, role);
+            return handleAgreementCreationMessage(chat, message, role);
         }
     }
 
-    private SendMessage handleInitialProductActionMessage(long chatId, String message) {
+    private SendMessage handleInitialProductActionMessage(Chat chat, String message) {
+        long chatId = chat.getId();
         List<ProductDto> productDtos = bankAppServiceClient.getAllActiveProductDtos();
         List<String> productTypes = productDtos.stream()
                 .map(productDto -> productDto.getType().getSimpleName())
@@ -47,7 +49,8 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
         if (productTypes.contains(message)) {
             AgreementDto agreementDto = new AgreementDto();
             agreementDto.setProductType(ProductType.valueOf(message.toUpperCase().replaceAll("\\s", "_")));
-            ChatIdAgreementDtoMap.put(chatId, agreementDto);
+            chat.setAgreementDto(agreementDto);
+            chatRepository.save(chat);
             return createSendMessageWithButtons(
                     chatId,
                     getAllProductsWithTypeListMessage(message,
@@ -67,12 +70,14 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
         return stringBuilder.toString();
     }
 
-    private SendMessage handleAgreementCreationMessage(long chatId, String message, Role role) {
-        AgreementDto agreementDto = ChatIdAgreementDtoMap.get(chatId);
+    private SendMessage handleAgreementCreationMessage(Chat chat, String message, Role role) {
+        long chatId = chat.getId();
+        AgreementDto agreementDto = chat.getAgreementDto();
         if (agreementDto.getCurrencyCode() == null) {
             agreementDto.setCurrencyCode(CurrencyCode.valueOf(message.toUpperCase()));
+            chatRepository.save(chat);
             if (isProductCard(agreementDto)) {
-                return completeAgreementDtoForCardProductMessage(chatId, agreementDto);
+                return completeAgreementDtoForCardProductMessage(chat, agreementDto);
             } else {
                 return createSendMessage(chatId, ENTER_AMOUNT);
             }
@@ -80,12 +85,13 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
         if (agreementDto.getSum() == null) {
             try {
                 agreementDto.setSum(BigDecimal.valueOf(Double.parseDouble(message)));
-                return completeAgreementDtoMessage(chatId, role, agreementDto);
+                chatRepository.save(chat);
+                return completeAgreementDtoMessage(chat, role, agreementDto);
             } catch (NumberFormatException e) {
                 return createSendMessage(chatId, INCORRECT_NUMBER);
             }
         } else {
-            return createNewAgreement(chatId, role, agreementDto);
+            return createNewAgreement(chat, role, agreementDto);
         }
     }
 
@@ -94,7 +100,8 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
                 || agreementDto.getProductType() == ProductType.CREDIT_CARD;
     }
 
-    private SendMessage completeAgreementDtoForCardProductMessage(long chatId, AgreementDto agreementDto) {
+    private SendMessage completeAgreementDtoForCardProductMessage(Chat chat, AgreementDto agreementDto) {
+        long chatId = chat.getId();
         ProductDto productDto = bankAppServiceClient.getSuitableProduct(agreementDto.getProductType(),
                 agreementDto.getSum(), agreementDto.getCurrencyCode());
         if (productDto == null) {
@@ -108,35 +115,40 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
         agreementDto.setSum(amount);
         agreementDto.setProductName(productDto.getName());
         agreementDto.setInterestRate(productDto.getInterestRate());
+        chatRepository.save(chat);
         return createSendMessageWithButtons(chatId,
                 String.format(SUITABLE_PRODUCT, agreementDto.getProductName(), agreementDto.getInterestRate(),
                         getStringFormattedPeriod(agreementDto.getPeriodMonths())),
                 List.of(CONFIRM, BACK));
     }
 
-    private SendMessage completeAgreementDtoMessage(long chatId, Role role, AgreementDto agreementDto) {
+    private SendMessage completeAgreementDtoMessage(Chat chat, Role role, AgreementDto agreementDto) {
+        long chatId = chat.getId();
         try {
             ProductDto productDto = bankAppServiceClient.getSuitableProduct(agreementDto.getProductType(),
                     agreementDto.getSum(), agreementDto.getCurrencyCode());
             agreementDto.setPeriodMonths(productDto.getPeriodMonths());
             agreementDto.setProductName(productDto.getName());
+            chatRepository.save(chat);
             return createSendMessageWithButtons(chatId,
                     String.format(SUITABLE_PRODUCT, agreementDto.getProductName(), productDto.getInterestRate(),
                             getStringFormattedPeriod(productDto.getPeriodMonths())),
                     List.of(CONFIRM, BACK));
         } catch (ResponseStatusException exception) {
-            ChatIdAgreementDtoMap.remove(chatId);
-            ChatIdActionNameMap.remove(chatId);
+            chat.setAgreementDto(null);
+            chat.setActionName(null);
+            chatRepository.save(chat);
             return createSendMessageWithButtons(chatId, exception.getReason() + "\n" + SELECT_ACTION,
                     getListOfActionsByUserRole(role));
         }
     }
 
-    private SendMessage createNewAgreement(long chatId, Role role, AgreementDto agreementDto) {
+    private SendMessage createNewAgreement(Chat chat, Role role, AgreementDto agreementDto) {
         agreementDto = bankAppServiceClient.createNewAgreement(agreementDto);
-        ChatIdAgreementDtoMap.remove(chatId);
-        ChatIdActionNameMap.remove(chatId);
-        return createSendMessageWithButtons(chatId, getNewAgreementMessage(agreementDto),
+        chat.setAgreementDto(null);
+        chat.setActionName(null);
+        chatRepository.save(chat);
+        return createSendMessageWithButtons(chat.getId(), getNewAgreementMessage(agreementDto),
                 getListOfActionsByUserRole(role));
     }
 

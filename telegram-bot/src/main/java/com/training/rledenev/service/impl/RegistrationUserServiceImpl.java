@@ -2,8 +2,9 @@ package com.training.rledenev.service.impl;
 
 import com.training.rledenev.client.BankAppServiceClient;
 import com.training.rledenev.dto.UserDto;
+import com.training.rledenev.entity.Chat;
+import com.training.rledenev.repository.ChatRepository;
 import com.training.rledenev.service.RegistrationUserService;
-import com.training.rledenev.service.chatmaps.ChatIdInRegistrationMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -11,10 +12,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import static com.training.rledenev.service.util.BotUtils.*;
+import static com.training.rledenev.util.BotUtils.*;
 
 @RequiredArgsConstructor
 @Service
@@ -26,92 +25,97 @@ public class RegistrationUserServiceImpl implements RegistrationUserService {
             "(?!.*\\.{2})[A-Za-z0-9][A-Za-z0-9.]{4,28}[A-Za-z0-9]@[A-Za-z0-9.]+\\.[A-Za-z]{2,}";
     private static final String PASSWORD_PATTERN =
             "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\\p{Punct})[a-zA-Z\\d\\p{Punct}]*$";
-    private static final Map<Long, UserDto> CHAT_ID_USER_DTO_MAP = new ConcurrentHashMap<>();
     private final BankAppServiceClient bankAppServiceClient;
+    private final ChatRepository chatRepository;
 
     @Override
-    public SendMessage handleRegistrationRequests(long chatId, String messageText, Update update) {
-        if (!CHAT_ID_USER_DTO_MAP.containsKey(chatId)) {
-            return fillInFirstName(chatId, messageText);
+    public SendMessage handleRegistrationRequests(Chat chat, String messageText, Update update) {
+        if (chat.getUserDto() == null) {
+            return fillInFirstName(chat, messageText);
         }
-        UserDto userDto = CHAT_ID_USER_DTO_MAP.get(chatId);
+        UserDto userDto = chat.getUserDto();
         if (userDto.getLastName() == null) {
-            return fillInLastName(chatId, messageText, userDto);
+            return fillInLastName(chat, messageText);
         }
         if (userDto.getPhone() == null) {
-            return fillInPhone(chatId, messageText, userDto);
+            return fillInPhone(chat, messageText);
         }
         if (userDto.getAddress() == null) {
-            return fillInAddress(chatId, messageText, userDto);
+            return fillInAddress(chat, messageText);
         }
         if (userDto.getEmail() == null) {
-            return fillInEmail(chatId, messageText, userDto);
+            return fillInEmail(chat, messageText);
         }
-        return fillInPassword(chatId, messageText, userDto);
+        return fillInPassword(chat, messageText);
     }
 
-    private SendMessage fillInFirstName(long chatId, String messageText) {
+    private SendMessage fillInFirstName(Chat chat, String messageText) {
         UserDto userDto = new UserDto();
         if (isValidName(messageText)) {
             userDto.setFirstName(messageText);
-            CHAT_ID_USER_DTO_MAP.put(chatId, userDto);
-            return createSendMessage(chatId, ENTER_LAST_NAME);
+            chat.setUserDto(userDto);
+            chatRepository.save(chat);
+            return createSendMessage(chat.getId(), ENTER_LAST_NAME);
         } else {
-            return createSendMessage(chatId, INCORRECT_NAME);
+            return createSendMessage(chat.getId(), INCORRECT_NAME);
         }
     }
 
-    private SendMessage fillInLastName(long chatId, String messageText, UserDto userDto) {
+    private SendMessage fillInLastName(Chat chat, String messageText) {
         if (isValidName(messageText)) {
-            userDto.setLastName(messageText);
-            return createSendMessage(chatId, ENTER_PHONE);
+            chat.getUserDto().setLastName(messageText);
+            chatRepository.save(chat);
+            return createSendMessage(chat.getId(), ENTER_PHONE);
         } else {
-            return createSendMessage(chatId, INCORRECT_NAME);
+            return createSendMessage(chat.getId(), INCORRECT_NAME);
         }
     }
 
-    private SendMessage fillInPhone(long chatId, String messageText, UserDto userDto) {
+    private SendMessage fillInPhone(Chat chat, String messageText) {
         if (isValidPhone(messageText)) {
-            userDto.setPhone(messageText);
-            return createSendMessage(chatId, ENTER_ADDRESS);
+            chat.getUserDto().setPhone(messageText);
+            chatRepository.save(chat);
+            return createSendMessage(chat.getId(), ENTER_ADDRESS);
         } else {
-            return createSendMessage(chatId, INCORRECT_PHONE);
+            return createSendMessage(chat.getId(), INCORRECT_PHONE);
         }
     }
 
-    private SendMessage fillInAddress(long chatId, String messageText, UserDto userDto) {
+    private SendMessage fillInAddress(Chat chat, String messageText) {
         if (isValidAddress(messageText)) {
-            userDto.setAddress(messageText);
-            return createSendMessage(chatId, ENTER_EMAIL);
+            chat.getUserDto().setAddress(messageText);
+            chatRepository.save(chat);
+            return createSendMessage(chat.getId(), ENTER_EMAIL);
         } else {
-            return createSendMessage(chatId, INCORRECT_ADDRESS);
+            return createSendMessage(chat.getId(), INCORRECT_ADDRESS);
         }
     }
 
-    private SendMessage fillInEmail(long chatId, String messageText, UserDto userDto) {
+    private SendMessage fillInEmail(Chat chat, String messageText) {
         if (isValidEmail(messageText)) {
-            userDto.setEmail(messageText);
-            return createSendMessage(chatId, ENTER_PASSWORD);
+            chat.getUserDto().setEmail(messageText);
+            chatRepository.save(chat);
+            return createSendMessage(chat.getId(), ENTER_PASSWORD);
         } else {
-            return createSendMessage(chatId, INCORRECT_EMAIL);
+            return createSendMessage(chat.getId(), INCORRECT_EMAIL);
         }
     }
 
-    private SendMessage fillInPassword(long chatId, String messageText, UserDto userDto) {
+    private SendMessage fillInPassword(Chat chat, String messageText) {
         if (isValidPassword(messageText)) {
+            UserDto userDto = chat.getUserDto();
             userDto.setPassword(messageText);
             try {
                 bankAppServiceClient.saveNewClient(userDto);
-                return createSendMessageWithButtons(chatId, REGISTRATION_COMPLETED, List.of(REGISTER_USER, LOG_IN));
+                return createSendMessageWithButtons(chat.getId(), REGISTRATION_COMPLETED, List.of(REGISTER_USER, LOG_IN));
             } catch (ResponseStatusException exception) {
-                return createSendMessageWithButtons(chatId, String.format(REGISTRATION_FAILED, exception.getReason()),
+                return createSendMessageWithButtons(chat.getId(), String.format(REGISTRATION_FAILED, exception.getReason()),
                         List.of(REGISTER_USER, LOG_IN));
             } finally {
-                CHAT_ID_USER_DTO_MAP.remove(chatId, userDto);
-                ChatIdInRegistrationMap.put(chatId, false);
+                chatRepository.delete(chat);
             }
         } else {
-            return createSendMessage(chatId, INCORRECT_PASSWORD);
+            return createSendMessage(chat.getId(), INCORRECT_PASSWORD);
         }
     }
 

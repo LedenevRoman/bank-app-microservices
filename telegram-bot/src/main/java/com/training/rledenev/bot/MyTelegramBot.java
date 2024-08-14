@@ -1,5 +1,6 @@
-package com.training.rledenev.config;
+package com.training.rledenev.bot;
 
+import com.training.rledenev.config.BotConfig;
 import com.training.rledenev.service.UpdateHandlerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

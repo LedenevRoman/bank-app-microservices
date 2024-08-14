@@ -2,9 +2,10 @@ package com.training.rledenev.service.action.impl;
 
 import com.training.rledenev.client.BankAppServiceClient;
 import com.training.rledenev.dto.AgreementDto;
+import com.training.rledenev.entity.Chat;
 import com.training.rledenev.enums.Role;
+import com.training.rledenev.repository.ChatRepository;
 import com.training.rledenev.service.action.ActionMessageHandlerService;
-import com.training.rledenev.service.chatmaps.ChatIdAgreementIdMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -13,21 +14,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.training.rledenev.service.util.BotUtils.*;
+import static com.training.rledenev.util.BotUtils.*;
 
 @RequiredArgsConstructor
 @Service
 public class AgreementMessageHandlerService implements ActionMessageHandlerService {
     private final BankAppServiceClient bankAppServiceClient;
+    private final ChatRepository chatRepository;
 
     @Override
-    public SendMessage handleMessage(long chatId, String message, Role role) {
+    public SendMessage handleMessage(Chat chat, String message, Role role) {
+        long chatId = chat.getId();
         if (role != Role.MANAGER) {
             return createSendMessageWithButtons(chatId, ACCESS_DENIED, getListOfActionsByUserRole(role));
         }
         List<AgreementDto> agreementDtos = bankAppServiceClient.getAgreementsForManager();
         final Long agreementId;
-        if (ChatIdAgreementIdMap.get(chatId) == null) {
+        if (chat.getChosenAgreementId() == null) {
             if (message.equals(NEW_AGREEMENTS)) {
                 return createSendMessageWithButtons(chatId, getListNewAgreementsMessage(agreementDtos),
                         getListOfAgreementsIdButtons(agreementDtos));
@@ -38,11 +41,12 @@ public class AgreementMessageHandlerService implements ActionMessageHandlerServi
                 return createSendMessageWithButtons(chatId, INCORRECT_NUMBER_INT,
                         getListOfAgreementsIdButtons(agreementDtos));
             }
-            return getAgreementIdSendMessage(chatId, agreementDtos, agreementId);
+            return getAgreementIdSendMessage(chat, agreementDtos, agreementId);
         } else {
-            agreementId = ChatIdAgreementIdMap.get(chatId);
+            agreementId = chat.getChosenAgreementId();
             agreementDtos.removeIf(a -> a.getId().equals(agreementId));
-            ChatIdAgreementIdMap.remove(chatId);
+            chat.setChosenAgreementId(null);
+            chatRepository.save(chat);
             if (message.equals(CONFIRM)) {
                 bankAppServiceClient.confirmAgreementByManager(agreementId);
                 return createSendMessageWithButtons(chatId,
@@ -59,15 +63,16 @@ public class AgreementMessageHandlerService implements ActionMessageHandlerServi
         return createSendMessageWithButtons(chatId, UNKNOWN_INPUT_MESSAGE, List.of(EXIT));
     }
 
-    private SendMessage getAgreementIdSendMessage(long chatId, List<AgreementDto> agreementDtos, Long agreementId) {
+    private SendMessage getAgreementIdSendMessage(Chat chat, List<AgreementDto> agreementDtos, Long agreementId) {
         Optional<AgreementDto> optionalAgreementDto = getOptionalFromListById(agreementDtos, agreementId);
         if (optionalAgreementDto.isPresent()) {
             AgreementDto agreementDto = optionalAgreementDto.get();
-            ChatIdAgreementIdMap.put(chatId, agreementId);
-            return createSendMessageWithButtons(chatId, getSelectedAgreementMessage(agreementDto),
+            chat.setChosenAgreementId(agreementId);
+            chatRepository.save(chat);
+            return createSendMessageWithButtons(chat.getId(), getSelectedAgreementMessage(agreementDto),
                     getConfirmBlockButtons());
         } else {
-            return createSendMessageWithButtons(chatId, WRONG_AGREEMENT_ID,
+            return createSendMessageWithButtons(chat.getId(), WRONG_AGREEMENT_ID,
                     getListOfAgreementsIdButtons(agreementDtos));
         }
     }

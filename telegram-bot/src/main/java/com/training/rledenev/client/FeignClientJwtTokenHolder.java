@@ -2,18 +2,18 @@ package com.training.rledenev.client;
 
 public class FeignClientJwtTokenHolder {
 
-    private static final ThreadLocal<String> tokenHolder = new ThreadLocal<>();
+    private static final ThreadLocal<String> TOKEN_HOLDER = new ThreadLocal<>();
 
     public static void setToken(String token) {
-        tokenHolder.set(token);
+        TOKEN_HOLDER.set(token);
     }
 
     public static String getToken() {
-        return tokenHolder.get();
+        return TOKEN_HOLDER.get();
     }
 
     public static void clear() {
-        tokenHolder.remove();
+        TOKEN_HOLDER.remove();
     }
 
     private FeignClientJwtTokenHolder() {

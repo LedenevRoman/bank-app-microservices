@@ -1,9 +1,8 @@
-package com.training.rledenev.service.util;
+package com.training.rledenev.util;
 
 import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.Role;
 import com.training.rledenev.enums.TransactionType;
-import com.training.rledenev.service.chatmaps.*;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -159,14 +158,6 @@ public final class BotUtils {
     private static final int MAX_ROW_SIZE_IN_KEYBOARD = 4;
 
     private BotUtils() {
-    }
-
-    public static void removeIdFromMaps(long chatId) {
-        ChatIdActionNameMap.remove(chatId);
-        ChatIdAgreementDtoMap.remove(chatId);
-        ChatIdAgreementIdMap.remove(chatId);
-        ChatIdAccountDtoMap.remove(chatId);
-        ChatIdTransactionDtoMap.remove(chatId);
     }
 
     public static SendMessage createSendMessage(Long chatId, String textToSend) {

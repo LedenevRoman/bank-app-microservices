@@ -3,12 +3,12 @@ package com.training.rledenev.service.action.impl;
 import com.training.rledenev.client.BankAppServiceClient;
 import com.training.rledenev.dto.AccountDto;
 import com.training.rledenev.dto.TransactionDto;
+import com.training.rledenev.entity.Chat;
 import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.Role;
+import com.training.rledenev.repository.ChatRepository;
 import com.training.rledenev.service.action.ActionMessageHandlerService;
 import com.training.rledenev.service.action.impl.transaction.TransactionMessageHandlerService;
-import com.training.rledenev.service.chatmaps.ChatIdAccountDtoMap;
-import com.training.rledenev.service.chatmaps.ChatIdTransactionDtoMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -17,68 +17,74 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import static com.training.rledenev.service.util.BotUtils.*;
+import static com.training.rledenev.util.BotUtils.*;
 
 @RequiredArgsConstructor
 @Service
 public class AccountsMessageHandlerService implements ActionMessageHandlerService {
-    private static final Map<Long, Boolean> CHAT_ID_IS_MAKING_TRANSACTION = new ConcurrentHashMap<>();
     private final BankAppServiceClient bankAppServiceClient;
     private final TransactionMessageHandlerService transactionMessageHandlerService;
+    private final ChatRepository chatRepository;
 
     @Override
-    public SendMessage handleMessage(long chatId, String message, Role userRole) {
+    public SendMessage handleMessage(Chat chat, String message, Role userRole) {
         List<AccountDto> accountDtos = bankAppServiceClient.getAccountsForClient();
-        if (ChatIdAccountDtoMap.get(chatId) == null) {
-            return handleInitialAccountActionMessage(chatId, message, accountDtos);
+        if (chat.getAccountDto() == null) {
+            return handleInitialAccountActionMessage(chat, message, accountDtos);
         } else {
             if (message.equals(BACK_TO_LIST_ACCOUNTS)) {
-                ChatIdAccountDtoMap.remove(chatId);
-                CHAT_ID_IS_MAKING_TRANSACTION.remove(chatId);
-                ChatIdTransactionDtoMap.remove(chatId);
-                return createSendMessageWithButtons(chatId, getMyAccountsMessage(accountDtos),
+                chat.setAccountDto(null);
+                chat.setMakingTransaction(false);
+                chat.setTransactionDto(null);
+                chatRepository.save(chat);
+                return createSendMessageWithButtons(chat.getId(), getMyAccountsMessage(accountDtos),
                         getMyAccountsButtons(accountDtos));
             }
-            return handleAccountActionOptionsMessage(chatId, message);
+            return handleAccountActionOptionsMessage(chat, message);
         }
     }
 
-    private SendMessage handleAccountActionOptionsMessage(long chatId, String message) {
-        AccountDto accountDto = ChatIdAccountDtoMap.get(chatId);
-        if (Boolean.TRUE.equals(CHAT_ID_IS_MAKING_TRANSACTION.get(chatId))) {
-            return transactionMessageHandlerService.handleMessage(chatId, message, accountDto);
+    private SendMessage handleAccountActionOptionsMessage(Chat chat, String message) {
+        AccountDto accountDto = chat.getAccountDto();
+        if (chat.isMakingTransaction()) {
+            return transactionMessageHandlerService.handleMessage(chat, message, accountDto);
         } else if (message.equals(MAKE_TRANSACTION)) {
-            CHAT_ID_IS_MAKING_TRANSACTION.put(chatId, true);
-            return transactionMessageHandlerService.handleMessage(chatId, message, accountDto);
+            chat.setMakingTransaction(true);
+            chatRepository.save(chat);
+            return transactionMessageHandlerService.handleMessage(chat, message, accountDto);
         }
         if (message.equals(VIEW_ALL_TRANSACTIONS)) {
             List<TransactionDto> allTransactionsDto = bankAppServiceClient
                     .getAllTransactionsOfAccount(accountDto.getNumber());
-            return createSendMessageWithButtons(chatId, getAllTransactionsMessage(accountDto, allTransactionsDto),
+            return createSendMessageWithButtons(chat.getId(), getAllTransactionsMessage(accountDto, allTransactionsDto),
                     List.of(BACK_TO_LIST_ACCOUNTS));
         } else {
-            return createSendMessageWithButtons(chatId, UNKNOWN_INPUT_MESSAGE, List.of(EXIT));
+            return createSendMessageWithButtons(chat.getId(), UNKNOWN_INPUT_MESSAGE, List.of(EXIT));
         }
     }
 
-    private SendMessage handleInitialAccountActionMessage(long chatId, String message, List<AccountDto> accountDtos) {
+    private SendMessage handleInitialAccountActionMessage(Chat chat, String message, List<AccountDto> accountDtos) {
         if (message.equals(MY_ACCOUNTS)) {
-            return createSendMessageWithButtons(chatId, getMyAccountsMessage(accountDtos),
+            return createSendMessageWithButtons(chat.getId(), getMyAccountsMessage(accountDtos),
                     getMyAccountsButtons(accountDtos));
         }
-        int accountUserIndex;
+        return handleAccountSelectionMessage(chat, message, accountDtos);
+    }
+
+    private SendMessage handleAccountSelectionMessage(Chat chat, String message, List<AccountDto> accountDtos) {
+        long chatId = chat.getId();
+        int accountIndex;
         try {
-            accountUserIndex = Integer.parseInt(message);
+            accountIndex = Integer.parseInt(message);
         } catch (NumberFormatException exception) {
             return createSendMessageWithButtons(chatId, INCORRECT_NUMBER_INT,
                     getMyAccountsButtons(accountDtos));
         }
-        if (accountUserIndex > 0 && accountUserIndex <= accountDtos.size()) {
-            AccountDto accountDto = accountDtos.get(accountUserIndex - 1);
-            ChatIdAccountDtoMap.put(chatId, accountDto);
+        if (accountIndex > 0 && accountIndex <= accountDtos.size()) {
+            AccountDto accountDto = accountDtos.get(accountIndex - 1);
+            chat.setAccountDto(accountDto);
+            chatRepository.save(chat);
             return createSendMessageWithButtons(chatId, getCustomAccountInfo(accountDto),
                     getListOfActionsForClientAccount());
         } else {

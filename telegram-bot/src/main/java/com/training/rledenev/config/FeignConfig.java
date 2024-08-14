@@ -1,5 +1,6 @@
 package com.training.rledenev.config;
 
+import com.training.rledenev.client.CustomErrorDecoder;
 import com.training.rledenev.client.FeignClientInterceptor;
 import feign.codec.ErrorDecoder;
 import org.springframework.context.annotation.Bean;

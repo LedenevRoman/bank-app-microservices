@@ -1,6 +1,7 @@
 package com.training.rledenev.service.action.impl;
 
 import com.training.rledenev.client.BankAppServiceClient;
+import com.training.rledenev.entity.Chat;
 import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.Role;
 import com.training.rledenev.service.action.ActionMessageHandlerService;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.training.rledenev.service.util.BotUtils.*;
+import static com.training.rledenev.util.BotUtils.*;
 
 @RequiredArgsConstructor
 @Service
@@ -21,7 +22,8 @@ public class CurrencyRatesHandlerService implements ActionMessageHandlerService 
     private final BankAppServiceClient bankAppServiceClient;
 
     @Override
-    public SendMessage handleMessage(long chatId, String message, Role role) {
+    public SendMessage handleMessage(Chat chat, String message, Role role) {
+        long chatId = chat.getId();
         List<String> currenciesWithoutDefaultCurrency = getAllCurrencies();
         List<String> currencyButtons = getCurrencyButtons(currenciesWithoutDefaultCurrency);
         if (message.equals(CURRENCY_RATES)) {

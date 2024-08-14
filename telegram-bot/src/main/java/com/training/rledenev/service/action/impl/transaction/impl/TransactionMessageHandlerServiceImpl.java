@@ -3,10 +3,11 @@ package com.training.rledenev.service.action.impl.transaction.impl;
 import com.training.rledenev.client.BankAppServiceClient;
 import com.training.rledenev.dto.AccountDto;
 import com.training.rledenev.dto.TransactionDto;
+import com.training.rledenev.entity.Chat;
 import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.TransactionType;
+import com.training.rledenev.repository.ChatRepository;
 import com.training.rledenev.service.action.impl.transaction.TransactionMessageHandlerService;
-import com.training.rledenev.service.chatmaps.ChatIdTransactionDtoMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,40 +16,45 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static com.training.rledenev.service.util.BotUtils.*;
+import static com.training.rledenev.util.BotUtils.*;
 
 @RequiredArgsConstructor
 @Service
 public class TransactionMessageHandlerServiceImpl implements TransactionMessageHandlerService {
     private final BankAppServiceClient bankAppServiceClient;
+    private final ChatRepository chatRepository;
 
     @Override
-    public SendMessage handleMessage(long chatId, String message, AccountDto accountDto) {
-        if (ChatIdTransactionDtoMap.get(chatId) == null) {
-            return handleInitialTransactionMessage(chatId, accountDto);
+    public SendMessage handleMessage(Chat chat, String message, AccountDto accountDto) {
+        if (chat.getTransactionDto() == null) {
+            return handleInitialTransactionMessage(chat, accountDto);
         } else {
-            return handleCreationTransactionMessage(chatId, message);
+            return handleCreationTransactionMessage(chat, message);
         }
     }
 
-    private static SendMessage handleInitialTransactionMessage(long chatId, AccountDto accountDto) {
+    private SendMessage handleInitialTransactionMessage(Chat chat, AccountDto accountDto) {
         TransactionDto transactionDto = new TransactionDto();
         transactionDto.setDebitAccountNumber(accountDto.getNumber());
-        ChatIdTransactionDtoMap.put(chatId, transactionDto);
-        return createSendMessage(chatId, ENTER_ACCOUNT_NUMBER);
+        chat.setTransactionDto(transactionDto);
+        chatRepository.save(chat);
+        return createSendMessage(chat.getId(), ENTER_ACCOUNT_NUMBER);
     }
 
-    private SendMessage handleCreationTransactionMessage(long chatId, String message) {
-        TransactionDto transactionDto = ChatIdTransactionDtoMap.get(chatId);
+    private SendMessage handleCreationTransactionMessage(Chat chat, String message) {
+        TransactionDto transactionDto = chat.getTransactionDto();
+        long chatId = chat.getId();
         SendMessage fillInMessage = fillInTransactionDtoMessage(chatId, message, transactionDto);
+        chatRepository.save(chat);
         if (fillInMessage != null) {
             return fillInMessage;
         }
+        chat.setTransactionDto(null);
+        chatRepository.save(chat);
         if (message.equals(CONFIRM)) {
             return createNewTransactionMessage(chatId, transactionDto);
         }
         if (message.equals(CANCEL)) {
-            ChatIdTransactionDtoMap.remove(chatId);
             return createSendMessageWithButtons(chatId, TRANSACTION_CANCELED, List.of(BACK_TO_LIST_ACCOUNTS));
         } else {
             return createSendMessageWithButtons(chatId, UNKNOWN_INPUT_MESSAGE, List.of(EXIT));
@@ -88,7 +94,6 @@ public class TransactionMessageHandlerServiceImpl implements TransactionMessageH
     }
 
     private SendMessage createNewTransactionMessage(long chatId, TransactionDto transactionDto) {
-        ChatIdTransactionDtoMap.remove(chatId);
         try {
             bankAppServiceClient.createTransaction(transactionDto);
             return createSendMessageWithButtons(chatId, TRANSACTION_COMPLETED, List.of(BACK_TO_LIST_ACCOUNTS));

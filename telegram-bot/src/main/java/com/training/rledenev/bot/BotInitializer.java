@@ -1,6 +1,5 @@
 package com.training.rledenev.bot;
 
-import com.training.rledenev.config.MyTelegramBot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -17,11 +16,11 @@ public class BotInitializer {
     private final MyTelegramBot telegramBot;
 
     @EventListener({ContextRefreshedEvent.class})
-    public void init()throws TelegramApiException {
+    public void init() throws TelegramApiException {
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
-        try{
+        try {
             telegramBotsApi.registerBot(telegramBot);
-        } catch (TelegramApiException e){
+        } catch (TelegramApiException e) {
             log.error(e.getMessage());
         }
     }
