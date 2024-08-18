@@ -1,6 +1,6 @@
 package com.training.rledenev.dto;
 
-import com.training.rledenev.entity.enums.ProductType;
+import com.training.rledenev.enums.ProductType;
 import lombok.Data;
 
 import java.math.BigDecimal;

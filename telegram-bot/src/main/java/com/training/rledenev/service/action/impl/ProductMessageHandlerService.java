@@ -77,7 +77,7 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
             agreementDto.setCurrencyCode(CurrencyCode.valueOf(message.toUpperCase()));
             chatRepository.save(chat);
             if (isProductCard(agreementDto)) {
-                return completeAgreementDtoForCardProductMessage(chat, agreementDto);
+                return fillInAgreementDtoForCardProduct(chat, agreementDto);
             } else {
                 return createSendMessage(chatId, ENTER_AMOUNT);
             }
@@ -100,7 +100,7 @@ public class ProductMessageHandlerService implements ActionMessageHandlerService
                 || agreementDto.getProductType() == ProductType.CREDIT_CARD;
     }
 
-    private SendMessage completeAgreementDtoForCardProductMessage(Chat chat, AgreementDto agreementDto) {
+    private SendMessage fillInAgreementDtoForCardProduct(Chat chat, AgreementDto agreementDto) {
         long chatId = chat.getId();
         ProductDto productDto = bankAppServiceClient.getSuitableProduct(agreementDto.getProductType(),
                 agreementDto.getSum(), agreementDto.getCurrencyCode());

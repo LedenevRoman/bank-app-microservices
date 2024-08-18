@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agreement Approval</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #007bff;
+            font-size: 24px;
+        }
+        p {
+            font-size: 16px;
+        }
+        .agreement-info {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            background-color: #e9f7ff;
+        }
+        .agreement-info p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Dear Managers,</h1>
+    <p>The new agreement is waiting for your approval.</p>
+
+    <div class="agreement-info">
+        <p><strong>Client:</strong> <span th:text="${clientName}"></span></p>
+        <p><strong>Product:</strong> <span th:text="${productName}"></span></p>
+        <p><strong>Amount:</strong> <span th:text="${amount}"></span> <span th:text="${currencyCode}"></span></p>
+        <p><strong>Payment Term:</strong> <span th:text="${period}"></span></p>
+    </div>
+
+    <p>Please review the details and approve at your earliest convenience.</p>
+</div>
+</body>
+</html>

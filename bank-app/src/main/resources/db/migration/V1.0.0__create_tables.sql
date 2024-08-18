@@ -44,14 +44,17 @@ CREATE TABLE IF NOT EXISTS agreements
     id            INT PRIMARY KEY AUTO_INCREMENT,
     account_id    int,
     product_id    int,
+    client_id     int,
     manager_id    int,
     status        varchar(20),
     sum           decimal(15, 2),
+    currency_code varchar(3),
     start_date    DATE,
     created_at    TIMESTAMP,
     updated_at    TIMESTAMP,
     FOREIGN KEY (account_id) REFERENCES accounts (id),
     FOREIGN KEY (product_id) REFERENCES products (id),
+    FOREIGN KEY (client_id) REFERENCES users (id),
     FOREIGN KEY (manager_id) REFERENCES users (id)
 );
 

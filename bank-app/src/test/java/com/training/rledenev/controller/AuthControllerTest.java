@@ -2,7 +2,7 @@ package com.training.rledenev.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.training.rledenev.dto.UserDto;
-import com.training.rledenev.entity.enums.Role;
+import com.training.rledenev.enums.Role;
 import com.training.rledenev.security.jwt.JwtProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

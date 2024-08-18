@@ -1,6 +1,7 @@
 package com.training.rledenev.entity;
 
-import com.training.rledenev.entity.enums.Status;
+import com.training.rledenev.enums.CurrencyCode;
+import com.training.rledenev.enums.Status;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,6 +32,10 @@ public class Agreement {
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", referencedColumnName = "id")
+    private User client;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id", referencedColumnName = "id")
     private User manager;
 
@@ -40,6 +45,10 @@ public class Agreement {
 
     @Column(name = "sum")
     private BigDecimal sum;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency_code")
+    private CurrencyCode currencyCode;
 
     @Column(name = "start_date")
     private LocalDate startDate;

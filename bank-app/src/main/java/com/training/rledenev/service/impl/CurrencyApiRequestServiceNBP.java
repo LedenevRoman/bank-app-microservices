@@ -1,6 +1,6 @@
 package com.training.rledenev.service.impl;
 
-import com.training.rledenev.entity.enums.CurrencyCode;
+import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.service.CurrencyApiRequestService;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;

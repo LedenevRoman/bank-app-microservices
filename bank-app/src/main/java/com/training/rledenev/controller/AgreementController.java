@@ -18,7 +18,7 @@ public class AgreementController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public AgreementDto createNewAgreement(@RequestBody AgreementDto agreementDto) {
-        return agreementService.createNewAgreement(agreementDto);
+        return agreementService.createAgreementWithNotification(agreementDto);
     }
 
     @GetMapping("/all/new")
@@ -30,13 +30,13 @@ public class AgreementController {
     @PutMapping("/confirm/{id}")
     @PreAuthorize("hasAuthority('MANAGER')")
     public void confirmAgreement(@PathVariable(name = "id") Long id) {
-        agreementService.confirmAgreementByManager(id);
+        agreementService.confirmAgreementWithNotification(id);
     }
 
     @PutMapping("/block/{id}")
     @PreAuthorize("hasAuthority('MANAGER')")
     public void blockAgreement(@PathVariable(name = "id") Long id) {
-        agreementService.blockAgreementByManager(id);
+        agreementService.blockAgreementWithNotification(id);
     }
 
     @GetMapping("/{id}")

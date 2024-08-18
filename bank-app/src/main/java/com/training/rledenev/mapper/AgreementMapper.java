@@ -14,12 +14,12 @@ public interface AgreementMapper {
     Agreement mapToEntity(AgreementDto agreementDto);
 
     @Named("toAgreementDto")
+    @Mapping(source = "client.email", target = "clientEmail")
     @Mapping(source = "sum", target = "sum")
     @Mapping(source = "product.interestRate", target = "interestRate")
     @Mapping(source = "product.type", target = "productType")
     @Mapping(source = "product.name", target = "productName")
     @Mapping(source = "product.periodMonths", target = "periodMonths")
-    @Mapping(source = "account.currencyCode", target = "currencyCode")
     AgreementDto mapToDto(Agreement agreement);
 
     @IterableMapping(qualifiedByName = "toAgreementDto")

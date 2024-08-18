@@ -1,8 +1,8 @@
 package com.training.rledenev.service;
 
 import com.training.rledenev.dto.ProductDto;
-import com.training.rledenev.entity.enums.CurrencyCode;
-import com.training.rledenev.entity.enums.ProductType;
+import com.training.rledenev.enums.CurrencyCode;
+import com.training.rledenev.enums.ProductType;
 
 import java.math.BigDecimal;
 import java.util.List;

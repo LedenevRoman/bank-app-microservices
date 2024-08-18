@@ -1,7 +1,7 @@
 package com.training.rledenev.controller;
 
 import com.training.rledenev.dto.UserDto;
-import com.training.rledenev.entity.enums.Role;
+import com.training.rledenev.enums.Role;
 import com.training.rledenev.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

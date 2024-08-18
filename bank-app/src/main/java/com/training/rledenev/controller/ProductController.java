@@ -1,8 +1,8 @@
 package com.training.rledenev.controller;
 
 import com.training.rledenev.dto.ProductDto;
-import com.training.rledenev.entity.enums.CurrencyCode;
-import com.training.rledenev.entity.enums.ProductType;
+import com.training.rledenev.enums.CurrencyCode;
+import com.training.rledenev.enums.ProductType;
 import com.training.rledenev.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

@@ -4,10 +4,11 @@ import com.training.rledenev.dto.AgreementDto;
 import com.training.rledenev.entity.Account;
 import com.training.rledenev.entity.Agreement;
 import com.training.rledenev.entity.Product;
-import com.training.rledenev.entity.enums.ProductType;
-import com.training.rledenev.entity.enums.Status;
+import com.training.rledenev.enums.ProductType;
+import com.training.rledenev.enums.Status;
 import com.training.rledenev.exception.AgreementNotFoundException;
 import com.training.rledenev.exception.ProductNotFoundException;
+import com.training.rledenev.kafka.KafkaProducer;
 import com.training.rledenev.mapper.AgreementMapper;
 import com.training.rledenev.repository.AccountRepository;
 import com.training.rledenev.repository.AgreementRepository;
@@ -16,17 +17,15 @@ import com.training.rledenev.security.UserProvider;
 import com.training.rledenev.service.AccountService;
 import com.training.rledenev.service.AgreementService;
 import com.training.rledenev.service.TransactionService;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
-@RequiredArgsConstructor
 @Service
 public class AgreementServiceImpl implements AgreementService {
     private final AgreementRepository agreementRepository;
@@ -36,21 +35,30 @@ public class AgreementServiceImpl implements AgreementService {
     private final AccountRepository accountRepository;
     private final AccountService accountService;
     private final TransactionService transactionService;
+    private final KafkaProducer kafkaProducer;
+    private final AgreementService agreementService;
 
-    @Transactional
+    public AgreementServiceImpl(AgreementRepository agreementRepository, AgreementMapper agreementMapper,
+                                UserProvider userProvider, ProductRepository productRepository,
+                                AccountRepository accountRepository, AccountService accountService,
+                                TransactionService transactionService, KafkaProducer kafkaProducer,
+                                @Lazy AgreementService agreementService) {
+        this.agreementRepository = agreementRepository;
+        this.agreementMapper = agreementMapper;
+        this.userProvider = userProvider;
+        this.productRepository = productRepository;
+        this.accountRepository = accountRepository;
+        this.accountService = accountService;
+        this.transactionService = transactionService;
+        this.kafkaProducer = kafkaProducer;
+        this.agreementService = agreementService;
+    }
+
     @Override
-    public AgreementDto createNewAgreement(AgreementDto agreementDto) {
-        Agreement agreement = getNewAgreement(agreementDto);
-        Optional<Product> productOptional = productRepository.findActiveProductByName(agreementDto.getProductName());
-        agreement.setProduct(productOptional.orElseThrow(() -> new ProductNotFoundException("Product not found")));
-
-        Account account = getNewAccount(agreementDto);
-        account.setAgreement(agreement);
-
-        accountRepository.save(account);
-        agreement.setAccount(account);
-        agreementRepository.save(agreement);
-        return agreementMapper.mapToDto(agreement);
+    public AgreementDto createAgreementWithNotification(AgreementDto agreementDto) {
+        AgreementDto createdAgreementDto = agreementService.createAgreement(agreementDto);
+        kafkaProducer.sendAgreement(createdAgreementDto);
+        return createdAgreementDto;
     }
 
     @Transactional
@@ -59,43 +67,56 @@ public class AgreementServiceImpl implements AgreementService {
         return agreementMapper.mapToListDtos(agreementRepository.findAllNewAgreements());
     }
 
-    @Transactional
     @Override
-    public void confirmAgreementByManager(Long agreementId) {
-        Agreement agreement = getAndUpdateAgreement(agreementId);
-        agreement.setStatus(Status.ACTIVE);
-        agreement.setStartDate(LocalDate.now());
-
-        Account account = agreement.getAccount();
-        if (agreement.getProduct().getType() == ProductType.LOAN
-                || agreement.getProduct().getType() == ProductType.CREDIT_CARD) {
-            transactionService.giveCreditFundsToAccount(account, agreement.getSum());
-        } else {
-            account.setBalance(agreement.getSum());
-        }
-        account.setUpdatedAt(LocalDateTime.now());
-        account.setStatus(Status.ACTIVE);
-
-        accountRepository.save(account);
+    public void confirmAgreementWithNotification(Long agreementId) {
+        AgreementDto agreementDto = agreementService.confirmAgreement(agreementId);
+        kafkaProducer.sendAgreement(agreementDto);
     }
 
     @Transactional
     @Override
-    public void blockAgreementByManager(Long agreementId) {
+    public AgreementDto confirmAgreement(Long agreementId) {
+        Agreement agreement = getAndUpdateAgreement(agreementId);
+        Account account = createAccount(agreement);
+        agreement.setAccount(account);
+        agreement.setStatus(Status.ACTIVE);
+        agreement.setStartDate(LocalDate.now());
+        return agreementMapper.mapToDto(agreement);
+    }
+
+    @Override
+    public void blockAgreementWithNotification(Long agreementId) {
+        AgreementDto agreementDto = agreementService.blockAgreement(agreementId);
+        kafkaProducer.sendAgreement(agreementDto);
+    }
+
+    @Transactional
+    @Override
+    public AgreementDto blockAgreement(Long agreementId) {
         Agreement agreement = getAndUpdateAgreement(agreementId);
         agreement.setStatus(Status.BLOCKED);
-
-        Account account = agreement.getAccount();
-        account.setUpdatedAt(LocalDateTime.now());
-        account.setStatus(Status.BLOCKED);
-
-        accountRepository.save(account);
+        return agreementMapper.mapToDto(agreement);
     }
 
     @Transactional
     @Override
     public AgreementDto getAgreementDtoById(Long id) {
         return agreementMapper.mapToDto(findById(id));
+    }
+
+    @Transactional
+    @Override
+    public AgreementDto createAgreement(AgreementDto agreementDto) {
+        Agreement agreement = agreementMapper.mapToEntity(agreementDto);
+        agreement.setClient(userProvider.getCurrentUser());
+        agreement.setStatus(Status.NEW);
+        Product product = productRepository.findActiveProductByName(agreementDto.getProductName())
+                .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+        agreement.setProduct(product);
+        agreement.setCreatedAt(LocalDateTime.now());
+        agreement.setUpdatedAt(LocalDateTime.now());
+        agreementRepository.save(agreement);
+        return agreementMapper.mapToDto(agreement);
     }
 
     private Agreement getAndUpdateAgreement(Long agreementId) {
@@ -110,16 +131,7 @@ public class AgreementServiceImpl implements AgreementService {
                 .orElseThrow(() -> new AgreementNotFoundException("Agreement not found with id = " + id));
     }
 
-
-    private Agreement getNewAgreement(AgreementDto agreementDto) {
-        Agreement agreement = agreementMapper.mapToEntity(agreementDto);
-        agreement.setStatus(Status.NEW);
-        agreement.setCreatedAt(LocalDateTime.now());
-        agreement.setUpdatedAt(LocalDateTime.now());
-        return agreement;
-    }
-
-    private Account getNewAccount(AgreementDto agreementDto) {
+    private Account createAccount(Agreement agreement) {
         Account account = new Account();
         account.setClient(userProvider.getCurrentUser());
         String number = RandomStringUtils.randomNumeric(16);
@@ -128,9 +140,20 @@ public class AgreementServiceImpl implements AgreementService {
         }
         account.setNumber(number);
         account.setStatus(Status.NEW);
-        account.setCurrencyCode(agreementDto.getCurrencyCode());
+        account.setAgreement(agreement);
+        account.setCurrencyCode(agreement.getCurrencyCode());
+
+        if (agreement.getProduct().getType() == ProductType.LOAN
+                || agreement.getProduct().getType() == ProductType.CREDIT_CARD) {
+            transactionService.giveCreditFundsToAccount(account, agreement.getSum());
+        } else {
+            account.setBalance(agreement.getSum());
+        }
+        account.setUpdatedAt(LocalDateTime.now());
+        account.setStatus(Status.ACTIVE);
         account.setCreatedAt(LocalDateTime.now());
         account.setUpdatedAt(LocalDateTime.now());
-        return account;
+
+        return accountRepository.save(account);
     }
 }

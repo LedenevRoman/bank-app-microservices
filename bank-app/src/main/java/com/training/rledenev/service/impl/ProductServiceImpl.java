@@ -2,8 +2,8 @@ package com.training.rledenev.service.impl;
 
 import com.training.rledenev.dto.ProductDto;
 import com.training.rledenev.entity.Product;
-import com.training.rledenev.entity.enums.CurrencyCode;
-import com.training.rledenev.entity.enums.ProductType;
+import com.training.rledenev.enums.CurrencyCode;
+import com.training.rledenev.enums.ProductType;
 import com.training.rledenev.exception.ProductNotFoundException;
 import com.training.rledenev.mapper.ProductMapper;
 import com.training.rledenev.repository.ProductRepository;

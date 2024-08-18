@@ -1,0 +1,49 @@
+package com.training.rledenev.mapper;
+
+import com.training.rledenev.dto.AccountDto;
+import com.training.rledenev.entity.Account;
+import com.training.rledenev.entity.Agreement;
+import com.training.rledenev.entity.User;
+import com.training.rledenev.enums.CurrencyCode;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.NullValueCheckStrategy;
+
+import java.time.LocalDate;
+
+@Mapper(componentModel = "spring")
+public interface AccountMapper {
+
+    @Named("toAccountDto")
+    @Mapping(source = "agreement.product.name", target = "productName")
+    @Mapping(source = "agreement.product.interestRate", target = "interestRate")
+    @Mapping(source = "client", target = "ownerFullName", qualifiedByName = "getUserFullName")
+    @Mapping(source = "agreement.manager", target = "managerFullName", qualifiedByName = "getUserFullName",
+            nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
+    @Mapping(source = "agreement", target = "paymentTerm", qualifiedByName = "getPaymentTermFromAgreement")
+    @Mapping(source = "currencyCode", target = "currencyName", qualifiedByName = "getCurrencyNameFromCode")
+    @Mapping(source = "agreement.product.type", target = "productType")
+    @Mapping(source = "agreement.startDate", target = "startDate")
+    AccountDto mapToDto(Account account);
+
+    @Named("getUserFullName")
+    default String getUserFullName(User user) {
+        return String.format("%s %s", user.getFirstName(), user.getLastName());
+    }
+
+    @Named("getPaymentTermFromAgreement")
+    default LocalDate getPaymentTermFromAgreement(Agreement agreement) {
+        if (agreement.getStartDate() == null) {
+            return null;
+        }
+        LocalDate startDate = agreement.getStartDate();
+        int periodMonth = agreement.getProduct().getPeriodMonths();
+        return startDate.plusMonths(periodMonth);
+    }
+
+    @Named("getCurrencyNameFromCode")
+    default String getCurrencyNameFromCode(CurrencyCode currencyCode) {
+        return currencyCode.getCurrencyName();
+    }
+}

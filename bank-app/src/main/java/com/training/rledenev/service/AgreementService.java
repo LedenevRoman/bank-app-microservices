@@ -5,13 +5,19 @@ import com.training.rledenev.dto.AgreementDto;
 import java.util.List;
 
 public interface AgreementService {
-    AgreementDto createNewAgreement(AgreementDto agreementDto);
+    AgreementDto createAgreementWithNotification(AgreementDto agreementDto);
 
     List<AgreementDto> getAgreementsForManager();
 
-    void confirmAgreementByManager(Long agreementId);
+    void confirmAgreementWithNotification(Long agreementId);
 
-    void blockAgreementByManager(Long agreementId);
+    AgreementDto confirmAgreement(Long agreementId);
+
+    void blockAgreementWithNotification(Long agreementId);
+
+    AgreementDto blockAgreement(Long agreementId);
 
     AgreementDto getAgreementDtoById(Long id);
+
+    AgreementDto createAgreement(AgreementDto agreementDto);
 }

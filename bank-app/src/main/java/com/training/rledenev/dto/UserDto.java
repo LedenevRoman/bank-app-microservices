@@ -1,6 +1,6 @@
 package com.training.rledenev.dto;
 
-import com.training.rledenev.entity.enums.Role;
+import com.training.rledenev.enums.Role;
 import lombok.Getter;
 import lombok.Setter;
 

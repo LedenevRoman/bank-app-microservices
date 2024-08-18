@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Information</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #007bff;
+            font-size: 24px;
+        }
+        p {
+            font-size: 16px;
+        }
+        .account-info {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            background-color: #e9f7ff;
+        }
+        .account-info p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Dear Client,</h1>
+    <p>Your agreement has been approved. A new account has been opened for you.</p>
+
+    <div class="account-info">
+        <p><strong>Account Number:</strong> <span th:text="${accountNumber}"></span></p>
+        <p><strong>Owner:</strong> <span th:text="${ownerFullName}"></span></p>
+        <p><strong>Product Name:</strong> <span th:text="${productName}"></span></p>
+        <p><strong>Interest Rate:</strong> <span th:text="${interestRate}"></span>%</p>
+        <p><strong>Start Date by Agreement:</strong> <span th:text="${startDate}"></span></p>
+        <p><strong>Payment Term by Agreement:</strong> <span th:text="${paymentTerm}"></span></p>
+        <p><strong>Balance:</strong> <span th:text="${balance}"></span> <span th:text="${currencyName}"></span></p>
+    </div>
+
+    <p>Please review the account details carefully.</p>
+</div>
+</body>
+</html>

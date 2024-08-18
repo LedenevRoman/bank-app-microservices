@@ -1,6 +1,6 @@
 package com.training.rledenev.service;
 
-import com.training.rledenev.entity.enums.CurrencyCode;
+import com.training.rledenev.enums.CurrencyCode;
 import org.json.JSONObject;
 
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package com.training.rledenev.repository;
 
 import com.training.rledenev.entity.Product;
-import com.training.rledenev.entity.enums.ProductType;
+import com.training.rledenev.enums.ProductType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

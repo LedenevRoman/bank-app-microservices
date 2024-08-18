@@ -1,6 +1,6 @@
 package com.training.rledenev.service.impl;
 
-import com.training.rledenev.entity.enums.CurrencyCode;
+import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.exception.RequestApiException;
 import com.training.rledenev.service.CurrencyApiRequestService;
 import com.training.rledenev.service.CurrencyService;

@@ -4,7 +4,7 @@ import com.training.rledenev.dto.AccountDto;
 import com.training.rledenev.entity.Account;
 import com.training.rledenev.entity.Agreement;
 import com.training.rledenev.entity.User;
-import com.training.rledenev.entity.enums.CurrencyCode;
+import com.training.rledenev.enums.CurrencyCode;
 import org.mapstruct.*;
 
 import java.time.LocalDate;

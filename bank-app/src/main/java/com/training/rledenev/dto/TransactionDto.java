@@ -1,7 +1,7 @@
 package com.training.rledenev.dto;
 
-import com.training.rledenev.entity.enums.CurrencyCode;
-import com.training.rledenev.entity.enums.TransactionType;
+import com.training.rledenev.enums.CurrencyCode;
+import com.training.rledenev.enums.TransactionType;
 import lombok.Data;
 
 import jakarta.validation.constraints.Positive;

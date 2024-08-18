@@ -2,12 +2,11 @@ package com.training.rledenev.service.impl;
 
 import com.training.rledenev.dto.UserDto;
 import com.training.rledenev.entity.User;
-import com.training.rledenev.entity.enums.Role;
-import com.training.rledenev.entity.enums.Status;
+import com.training.rledenev.enums.Role;
+import com.training.rledenev.enums.Status;
 import com.training.rledenev.exception.AuthenticationException;
 import com.training.rledenev.exception.UserAlreadyExistsException;
 import com.training.rledenev.exception.UserNotFoundException;
-import com.training.rledenev.kafka.KafkaProducer;
 import com.training.rledenev.mapper.UserMapper;
 import com.training.rledenev.repository.UserRepository;
 import com.training.rledenev.security.UserProvider;
@@ -28,7 +27,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserProvider userProvider;
     private final UserMapper userMapper;
-    private final KafkaProducer kafkaProducer;
 
     @Transactional
     @Override
@@ -54,8 +52,6 @@ public class UserServiceImpl implements UserService {
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
             if (passwordEncoder.matches(password, user.getPassword())) {
-                kafkaProducer.sendMessage(String.format("User %s %s logged in",
-                        user.getFirstName(), user.getLastName()));
                 return user;
             }
         }
