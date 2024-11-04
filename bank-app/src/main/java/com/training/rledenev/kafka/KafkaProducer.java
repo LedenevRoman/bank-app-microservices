@@ -1,6 +1,7 @@
 package com.training.rledenev.kafka;
 
 import com.training.rledenev.dto.AgreementDto;
+import com.training.rledenev.dto.TransactionDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -14,7 +15,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class KafkaProducer {
     private static final String AGREEMENT_TOPIC = "agreement-topic";
+    private static final String TRANSACTION_TOPIC = "transaction-topic";
     private final KafkaTemplate<String, AgreementDto> agreementKafkaTemplate;
+    private final KafkaTemplate<String, TransactionDto> transactionKafkaTemplate;
 
 
     public void sendAgreement(AgreementDto agreementDto) {
@@ -25,5 +28,15 @@ public class KafkaProducer {
                 messageKey, agreementDto.getId());
         log.info("to kafka topic - {}", AGREEMENT_TOPIC);
         agreementKafkaTemplate.send(producerRecord);
+    }
+
+    public void sendTransaction(TransactionDto transactionDto) {
+        String messageKey = UUID.randomUUID().toString();
+        ProducerRecord<String, TransactionDto> producerRecord =
+                new ProducerRecord<>(TRANSACTION_TOPIC, messageKey, transactionDto);
+        log.info("Sending message: message key - {}, transaction id - {}",
+                messageKey, transactionDto.getId());
+        log.info("to kafka topic - {}", AGREEMENT_TOPIC);
+        transactionKafkaTemplate.send(producerRecord);
     }
 }

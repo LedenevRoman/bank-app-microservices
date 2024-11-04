@@ -18,9 +18,12 @@ public interface TransactionMapper {
     @Named("toTransactionDto")
     @Mapping(source = "debitAccount.number", target = "debitAccountNumber")
     @Mapping(source = "creditAccount.number", target = "creditAccountNumber")
+    @Mapping(source = "debitAccount.currencyCode", target = "debitCurrencyCode")
+    @Mapping(source = "creditAccount.currencyCode", target = "creditCurrencyCode")
     @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "mapToDate")
     TransactionDto mapToDto(Transaction transaction);
 
+    @Mapping(target = "id", ignore = true)
     Transaction mapToEntity(TransactionDto transactionDto);
 
     @IterableMapping(qualifiedByName = "toTransactionDto")

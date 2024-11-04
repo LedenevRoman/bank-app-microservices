@@ -9,7 +9,9 @@ import java.util.List;
 public interface TransactionService {
     List<TransactionDto> getAllTransactionsOfAccount(String accountNumber);
 
-    void createTransaction(TransactionDto transactionDto);
+    void createTransactionWithNotification(TransactionDto transactionDto);
+
+    TransactionDto createTransaction(TransactionDto transactionDto);
 
     void giveCreditFundsToAccount(Account account, BigDecimal amount);
 }

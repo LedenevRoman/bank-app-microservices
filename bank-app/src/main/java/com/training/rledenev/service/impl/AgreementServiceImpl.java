@@ -61,7 +61,7 @@ public class AgreementServiceImpl implements AgreementService {
         return createdAgreementDto;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<AgreementDto> getAgreementsForManager() {
         return agreementMapper.mapToListDtos(agreementRepository.findAllNewAgreements());
@@ -98,7 +98,7 @@ public class AgreementServiceImpl implements AgreementService {
         return agreementMapper.mapToDto(agreement);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public AgreementDto getAgreementDtoById(Long id) {
         return agreementMapper.mapToDto(findById(id));
@@ -133,7 +133,7 @@ public class AgreementServiceImpl implements AgreementService {
 
     private Account createAccount(Agreement agreement) {
         Account account = new Account();
-        account.setClient(userProvider.getCurrentUser());
+        account.setClient(agreement.getClient());
         String number = RandomStringUtils.randomNumeric(16);
         while (accountService.isAccountNumberExists(number)) {
             number = RandomStringUtils.randomNumeric(16);

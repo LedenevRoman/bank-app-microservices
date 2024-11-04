@@ -23,20 +23,20 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final CurrencyService currencyService;
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<ProductDto> getAllActiveProductDtos() {
         return productMapper.mapToListDto(productRepository.findAllActiveProducts());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<ProductDto> getActiveProductsWithType(ProductType productType) {
         return productMapper.mapToListDto(productRepository
                 .findAllActiveProductsWithType(productType));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public ProductDto getSuitableProduct(ProductType productType, BigDecimal amount, CurrencyCode currencyCode) {
         Product product;

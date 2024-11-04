@@ -7,6 +7,7 @@ import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.TransactionType;
 import com.training.rledenev.exception.InsufficientFundsException;
 import com.training.rledenev.exception.NotOwnerException;
+import com.training.rledenev.kafka.KafkaProducer;
 import com.training.rledenev.mapper.TransactionMapper;
 import com.training.rledenev.repository.AccountRepository;
 import com.training.rledenev.repository.TransactionRepository;
@@ -14,7 +15,7 @@ import com.training.rledenev.security.UserProvider;
 import com.training.rledenev.service.AccountService;
 import com.training.rledenev.service.CurrencyService;
 import com.training.rledenev.service.TransactionService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,38 +25,61 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@RequiredArgsConstructor
 @Service
 public class TransactionServiceImpl implements TransactionService {
+    private static final String MAIN_BANK_ACCOUNT_NUMBER = "1111111111111111";
     private final TransactionMapper transactionMapper;
     private final TransactionRepository transactionRepository;
     private final AccountService accountService;
     private final CurrencyService currencyService;
     private final AccountRepository accountRepository;
     private final UserProvider userProvider;
+    private final KafkaProducer kafkaProducer;
+    private final TransactionService transactionService;
 
-    @Transactional
+    public TransactionServiceImpl(TransactionMapper transactionMapper, TransactionRepository transactionRepository,
+                                  AccountService accountService, CurrencyService currencyService,
+                                  AccountRepository accountRepository, UserProvider userProvider,
+                                  KafkaProducer kafkaProducer, @Lazy TransactionService transactionService) {
+        this.transactionMapper = transactionMapper;
+        this.transactionRepository = transactionRepository;
+        this.accountService = accountService;
+        this.currencyService = currencyService;
+        this.accountRepository = accountRepository;
+        this.userProvider = userProvider;
+        this.kafkaProducer = kafkaProducer;
+        this.transactionService = transactionService;
+    }
+
+    @Transactional(readOnly = true)
     @Override
     public List<TransactionDto> getAllTransactionsOfAccount(String accountNumber) {
         return transactionMapper.mapToListDto(transactionRepository
                 .getAllTransactionsWithAccountNumber(accountNumber));
     }
 
+    @Override
+    public void createTransactionWithNotification(TransactionDto transactionDto) {
+        TransactionDto createdTransactionDto = transactionService.createTransaction(transactionDto);
+        kafkaProducer.sendTransaction(createdTransactionDto);
+    }
+
     @Transactional(isolation = Isolation.READ_COMMITTED)
     @Override
-    public void createTransaction(TransactionDto transactionDto) {
+    public TransactionDto createTransaction(TransactionDto transactionDto) {
         Account debitAccount = accountService.getAccountByNumber(transactionDto.getDebitAccountNumber());
         checkDebitAccountOwner(debitAccount);
         Account creditAccount = accountService.getAccountByNumber(transactionDto.getCreditAccountNumber());
         Transaction transaction = saveTransactionFromDto(transactionDto, debitAccount, creditAccount);
         updateAccount(debitAccount, debitAccount.getBalance().subtract(transaction.getDebitBalanceDifference()));
         updateAccount(creditAccount, creditAccount.getBalance().add(transaction.getCreditBalanceDifference()));
+        return transactionMapper.mapToDto(transaction);
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     @Override
     public void giveCreditFundsToAccount(Account creditAccount, BigDecimal amount) {
-        Account debitAccount = accountService.getMainBankAccount();
+        Account debitAccount = accountService.getAccountByNumber(MAIN_BANK_ACCOUNT_NUMBER);
         Transaction transaction = saveNewTransaction(creditAccount, amount, debitAccount);
         updateAccount(debitAccount, debitAccount.getBalance().subtract(transaction.getDebitBalanceDifference()));
         updateAccount(creditAccount, transaction.getCreditBalanceDifference());

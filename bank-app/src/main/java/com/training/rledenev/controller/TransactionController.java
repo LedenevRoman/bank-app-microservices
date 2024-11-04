@@ -22,6 +22,6 @@ public class TransactionController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public void createTransaction(@RequestBody TransactionDto transactionDto) {
-        transactionService.createTransaction(transactionDto);
+        transactionService.createTransactionWithNotification(transactionDto);
     }
 }

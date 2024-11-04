@@ -12,6 +12,4 @@ public interface AccountService {
     List<AccountDto> getAccountsForClient();
 
     Account getAccountByNumber(String accountNumber);
-
-    Account getMainBankAccount();
 }

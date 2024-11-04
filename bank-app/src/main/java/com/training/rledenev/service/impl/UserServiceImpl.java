@@ -45,7 +45,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public User findByEmailAndPassword(String email, String password) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
@@ -63,7 +63,7 @@ public class UserServiceImpl implements UserService {
         return userProvider.getCurrentUser().getRole();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public UserDto getUserDtoById(Long id) {
         return userMapper.mapToDto(userRepository.findById(id)
