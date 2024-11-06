@@ -1,6 +1,8 @@
 package com.training.rledenev.controller;
 
+import com.training.rledenev.config.KafkaConfig;
 import com.training.rledenev.enums.CurrencyCode;
+import com.training.rledenev.kafka.KafkaProducer;
 import com.training.rledenev.service.CurrencyApiRequestService;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,6 +31,12 @@ class CurrencyControllerTest {
 
     @MockBean
     private CurrencyApiRequestService currencyApiRequestService;
+
+    @MockBean
+    KafkaProducer kafkaProducer;
+
+    @MockBean
+    KafkaConfig kafkaConfig;
 
     @Test
     @WithUserDetails(value = "isabella.white@yopmail.com")

@@ -1,14 +1,17 @@
 package com.training.rledenev.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.training.rledenev.config.KafkaConfig;
 import com.training.rledenev.dto.UserDto;
 import com.training.rledenev.enums.Role;
+import com.training.rledenev.kafka.KafkaProducer;
 import com.training.rledenev.security.jwt.JwtProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.jdbc.Sql;
@@ -33,6 +36,12 @@ class AuthControllerTest {
 
     @Autowired
     private JwtProvider jwtProvider;
+
+    @MockBean
+    KafkaProducer kafkaProducer;
+
+    @MockBean
+    KafkaConfig kafkaConfig;
 
     @Test
     @WithUserDetails(value = "isabella.white@yopmail.com")

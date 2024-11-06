@@ -2,6 +2,7 @@ package com.training.rledenev.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.training.rledenev.config.KafkaConfig;
 import com.training.rledenev.dto.AccountDto;
 import com.training.rledenev.dto.AgreementDto;
 import com.training.rledenev.entity.User;
@@ -9,12 +10,14 @@ import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.ProductType;
 import com.training.rledenev.enums.Role;
 import com.training.rledenev.enums.Status;
+import com.training.rledenev.kafka.KafkaProducer;
 import com.training.rledenev.security.CustomUserDetails;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,6 +46,12 @@ class AgreementControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    KafkaProducer kafkaProducer;
+
+    @MockBean
+    KafkaConfig kafkaConfig;
 
     @Test
     @WithUserDetails(value = "isabella.white@yopmail.com")
@@ -217,6 +226,7 @@ class AgreementControllerTest {
     private static List<AgreementDto> getNewAgreements() {
         AgreementDto agreementDto1 = new AgreementDto();
         agreementDto1.setId(3L);
+        agreementDto1.setClientEmail("james.harris@yopmail.com");
         agreementDto1.setProductType(ProductType.LOAN);
         agreementDto1.setProductName("Auto Loan");
         agreementDto1.setCurrencyCode(CurrencyCode.EUR);
@@ -227,6 +237,7 @@ class AgreementControllerTest {
 
         AgreementDto agreementDto2 = new AgreementDto();
         agreementDto2.setId(4L);
+        agreementDto2.setClientEmail("james.harris@yopmail.com");
         agreementDto2.setProductType(ProductType.DEBIT_CARD);
         agreementDto2.setProductName("Debit card");
         agreementDto2.setCurrencyCode(CurrencyCode.EUR);

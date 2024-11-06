@@ -34,6 +34,8 @@ public class LogInUserServiceImpl implements LogInUserService {
                 chat.setSecurityToken(token);
                 FeignClientJwtTokenHolder.setToken(token);
                 UserDto currentUser = bankAppServiceClient.getCurrentUser();
+                chat.setInLogin(false);
+                chatRepository.save(chat);
                 return createSendMessageWithButtons(chatId,
                         String.format(AUTHENTICATION_COMPLETED, currentUser.getFirstName(), currentUser.getLastName()),
                         getListOfActionsByUserRole(currentUser.getRole()));
@@ -41,8 +43,6 @@ public class LogInUserServiceImpl implements LogInUserService {
                 chatRepository.delete(chat);
                 return createSendMessageWithButtons(chatId, AUTHENTICATION_FAILED, List.of(REGISTER_USER, LOG_IN));
             } finally {
-                chat.setInLogin(false);
-                chatRepository.save(chat);
                 FeignClientJwtTokenHolder.clear();
             }
         } else {

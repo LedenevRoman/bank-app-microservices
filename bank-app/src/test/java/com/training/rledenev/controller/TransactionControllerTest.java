@@ -2,16 +2,19 @@ package com.training.rledenev.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.training.rledenev.config.KafkaConfig;
 import com.training.rledenev.dto.AccountDto;
 import com.training.rledenev.dto.ErrorData;
 import com.training.rledenev.dto.TransactionDto;
 import com.training.rledenev.enums.CurrencyCode;
 import com.training.rledenev.enums.TransactionType;
+import com.training.rledenev.kafka.KafkaProducer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.jdbc.Sql;
@@ -40,6 +43,12 @@ class TransactionControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    KafkaProducer kafkaProducer;
+
+    @MockBean
+    KafkaConfig kafkaConfig;
 
     @Test
     @WithUserDetails(value = "isabella.white@yopmail.com")
@@ -170,6 +179,7 @@ class TransactionControllerTest {
 
     private List<TransactionDto> getTransactionsOfThirdAccount() throws ParseException {
         TransactionDto transactionDto1 = new TransactionDto();
+        transactionDto1.setId(1L);
         transactionDto1.setDebitAccountNumber("1234567890123456");
         transactionDto1.setCreditAccountNumber("6123456789012345");
         transactionDto1.setAmount(BigDecimal.valueOf(1037.58)
@@ -177,13 +187,16 @@ class TransactionControllerTest {
         transactionDto1.setCurrencyCode(CurrencyCode.USD);
         transactionDto1.setDebitBalanceDifference(BigDecimal.valueOf(1037)
                 .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto1.setDebitCurrencyCode(CurrencyCode.USD);
         transactionDto1.setCreditBalanceDifference(BigDecimal.valueOf(1037)
                 .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto1.setCreditCurrencyCode(CurrencyCode.USD);
         transactionDto1.setType(TransactionType.CASH);
         transactionDto1.setDescription("for ice cream");
         transactionDto1.setCreatedAt(getDateFromString());
 
         TransactionDto transactionDto2 = new TransactionDto();
+        transactionDto2.setId(2L);
         transactionDto2.setDebitAccountNumber("6123456789012345");
         transactionDto2.setCreditAccountNumber("4561234567890123");
         transactionDto2.setAmount(BigDecimal.valueOf(845.67)
@@ -191,8 +204,10 @@ class TransactionControllerTest {
         transactionDto2.setCurrencyCode(CurrencyCode.USD);
         transactionDto2.setDebitBalanceDifference(BigDecimal.valueOf(845)
                 .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto2.setDebitCurrencyCode(CurrencyCode.USD);
         transactionDto2.setCreditBalanceDifference(BigDecimal.valueOf(845)
                 .setScale(4, RoundingMode.UNNECESSARY));
+        transactionDto2.setCreditCurrencyCode(CurrencyCode.EUR);
         transactionDto2.setType(TransactionType.CASH);
         transactionDto2.setDescription("for ice cream");
         transactionDto2.setCreatedAt(getDateFromString());

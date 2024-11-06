@@ -32,12 +32,12 @@ VALUES
     (2, '4561234567890123', 'NEW', 0, 'EUR', '2023-09-04 13:57:40', '2023-09-04 13:57:40'),
     (2, '5612345678901234', 'NEW', 0, 'EUR', '2023-09-03 13:57:40', '2023-09-03 13:57:40');
 
-INSERT INTO agreements (account_id, product_id, manager_id, status, sum, start_date, created_at, updated_at)
+INSERT INTO agreements (account_id, product_id, client_id, manager_id, status, sum, currency_code, start_date, created_at, updated_at)
 VALUES
-    (2, 4, 3, 'ACTIVE', 10000, '2023-09-03', '2023-09-03 12:00:00', '2023-09-03 12:00:00'),
-    (3, 7, 3,'ACTIVE', 90000, '2023-09-03', '2023-09-03 12:00:00', '2023-09-03 12:00:00'),
-    (4, 1, null, 'NEW', 11000, null, '2023-09-03 12:00:00', '2023-09-03 12:00:00'),
-    (5, 8, null, 'NEW', 11000, null, '2023-09-03 12:00:00', '2023-09-03 12:00:00');
+    (2, 4, 1, 3, 'ACTIVE', 10000, 'USD', '2023-09-03', '2023-09-03 12:00:00', '2023-09-03 12:00:00'),
+    (3, 7, 1, 3,'ACTIVE', 90000, 'USD', '2023-09-03', '2023-09-03 12:00:00', '2023-09-03 12:00:00'),
+    (4, 1, 2, null, 'NEW', 11000, 'EUR', null, '2023-09-03 12:00:00', '2023-09-03 12:00:00'),
+    (5, 8, 2, null, 'NEW', 11000, 'EUR', null, '2023-09-03 12:00:00', '2023-09-03 12:00:00');
 
 INSERT INTO transactions (debit_account_id, credit_account_id, type, amount, currency_code, debit_balance_difference, credit_balance_difference, description, created_at)
 VALUES

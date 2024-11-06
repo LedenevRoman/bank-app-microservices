@@ -13,11 +13,6 @@ public class KafkaConfig {
     }
 
     @Bean
-    public NewTopic newAccountTopic() {
-        return new NewTopic("account-topic", 1, (short) 1);
-    }
-
-    @Bean
     public NewTopic newTransactionTopic() {
         return new NewTopic("transaction-topic", 1, (short) 1);
     }
