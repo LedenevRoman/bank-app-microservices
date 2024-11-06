@@ -9,5 +9,11 @@ spring:
     openfeign:
       httpclient:
         connection-timeout: 5000
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+
 bank-app-service:
-  url: http://localhost:8080
+  url: ${BANK_APP_URL:http://localhost:8080}
